@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    branch:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v1
+
+      - name: Assume role using OIDC
+        uses: aws-actions/configure-aws-credentials@main
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: us-east-2
+
+      - name: CDK deploy
+        uses: youyo/aws-cdk-github-action@v2
+        with:
+          working_dir: './vsnandy_lambda_api'
+          cdk_subcommand: 'deploy'
+          cdk_args: '--require-approval never'
