@@ -28,7 +28,7 @@ class VsnandyLambdaApiStack(Stack):
             type="AWS::Lambda::Url",
             properties={
                 "TargetFunctionArn": my_lambda.function_arn,
-                "AuthType": "NONE",
+                "AuthType": "IAM_ROLE",
                 "Cors": {
                     "AllowOrigins": ["https://vsnandy.github.io"]
                 }
