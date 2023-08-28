@@ -7,25 +7,30 @@ on:
 
   workflow_dispatch:
 
+env:
+  AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   aws_cdk:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-region: us-east-2
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}/github-actions-role
           role-session-name: session
-          aws-account-id: ${{ secrets.AWS_ACCOUNT_ID }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Install AWS CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y awscli
-
-      - name: Assume IAM Role
-        run: aws sts assume-role --role-arn arn:aws:iam::${{ env.aws-account-id }}:role/github-actions-role --role-session-name ${{ env.role-session-name }} --region ${{ env.aws-region }}
