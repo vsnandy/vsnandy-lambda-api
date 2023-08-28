@@ -29,7 +29,7 @@ class VsnandyLambdaApiStack(Stack):
             properties={
                 "TargetFunctionArn": my_lambda.function_arn,
                 "AuthType": "NONE",
-                "Cors":{"AllowOrigins": ["http://localhost:8000/", "https://vsnandy.github.io/"]}
+                "Cors":{"AllowOrigins": ["https://vsnandy.github.io/"]}
             }
         )
 
