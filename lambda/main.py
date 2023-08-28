@@ -8,5 +8,5 @@ def handler(event, context):
         'headers': {
             'Content-Type': 'text/plain'
         },
-        'body': 'Hello, World!\nYou have hit {}\n'.format(event['path'])
+        'body': 'Hello, World!'
     }
