@@ -51,3 +51,6 @@ jobs:
           # Install your Python dependencies here
           pip install -r ${PWD}/requirements.txt
           npm install -g aws-cdk
+
+      - name: Deploy to AWS
+        run: cdk deploy --app="python3 ${PWD}/app.py" --require-approval=never
