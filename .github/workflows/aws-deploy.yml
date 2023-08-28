@@ -1,0 +1,28 @@
+name: Deploy AWS CDK
+
+# Controls when the action will run
+on:
+  push:
+    branches: [main]
+
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+jobs:
+  aws_cdk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Assume IAM Role
+        run: aws sts assume-role --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions-role --role-session-name session --region ${{ env.AWS_REGION }}
