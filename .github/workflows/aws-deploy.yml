@@ -49,4 +49,5 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # Install your Python dependencies here
+          pip install -r ${PWD}/requirements.txt
           npm install -g aws-cdk
