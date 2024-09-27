@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  localstack:
+    container_name: vsnandy-infra
+    network_mode: bridge
+    build:
+      context: .
+      dockerfile: ../lambda/src/Dockerfile
+    ports:
+      - "4566:4566" # Use port 4566 for both DynamoDB and S3
+      - "4574:4574" # Lambda
+      - "4582:4582" # Cloudwatch
+      - "4593:4593" # IAM
+      - "9090:9090"
+    environment:
+      - SERVICES=dynamodb,iam,lambda,cloudwatch
+      - DEFAULT_REGION=us-east-1
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DATA_DIR=/tmp/localstack/data
+      - PORT_WEB_UI=8080
+      - AWS_ACCESS_KEY_ID=testKey
+      - AWS_SECRET_ACCESS_KEY=testSecret
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ".:/usr/src/app/project"
+      - "./localstack_data:/var/lib/localstack" # Mounts the local directory to the container
+      - "/var/run/docker.sock:/var/run/docker.sock" # Mounts the docker socket
