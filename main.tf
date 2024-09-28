@@ -4,7 +4,9 @@ variable "STAGE" {
   default = "LOCAL"
 }
 
-variable "lambda_logging_policy_arn" {}
+variable "lambda_logging_policy_arn" {
+  type = string
+}
 
 terraform {
   required_providers {
@@ -23,7 +25,7 @@ provider "aws" {
 // IMPORTS
 import {
   to = aws_iam_policy.lambda_logging_policy
-  id = var.lambda_logging_policy_arn
+  id = "${var.lambda_logging_policy_arn}"
 }
 
 import {
