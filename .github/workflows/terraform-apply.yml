@@ -26,6 +26,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
 
+      - name: Install AWS CLI v2
+        run: aws iam list-instance-profiles
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -33,6 +36,11 @@ jobs:
         id: fmt
         run: terraform fmt
         continue-on-error: true
+
+      - name: Terraform Import
+        id: import
+        run: |
+          terraform import aws_iam_role. 
 
       - name: Terraform Init
         id: init
