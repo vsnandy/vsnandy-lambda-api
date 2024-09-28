@@ -22,7 +22,7 @@ import {
 
 import {
   to = aws_iam_policy.lambda_logging_policy
-  id = "vsnandy_lambda_logging_policy"
+  id = aws_iam_policy.lambda_logging_policy.arn
 }
 
 // Define an IAM policy for the lambda
