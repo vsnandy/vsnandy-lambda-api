@@ -2,12 +2,11 @@ import os
 import json
 import logging
 
-logger = logging.getLogger()
-logger.setLevel("INFO")
+logging.basicConfig()
+logger = logging.getLogger(__name__)
 
 def handler(event, context):
     # TODO: vsnandy-lambda-api
-    logger.info()
     logger.info("*** ENVIRONMENT VARIABLES ***")
     logger.info(os.environ['AWS_LAMBDA_LOG_GROUP_NAME'])
     logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
