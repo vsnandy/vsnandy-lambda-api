@@ -10,6 +10,21 @@ provider "aws" {
   region = "us-east-1"
 }
 
+import {
+  to = aws_lambda_function.lambda_function
+  id = "vsnandy-lambda-api"
+}
+
+import {
+  to = aws_iam_role.lambda_role
+  id = "vsnandy_lambda_role"
+}
+
+import {
+  to = aws_iam_policy.lambda_logging_policy
+  id = "vsnandy_lambda_logging_policy"
+}
+
 // Define an IAM policy for the lambda
 data "aws_iam_policy_document" "lambda_policy" { 
   statement {
