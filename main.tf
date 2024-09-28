@@ -18,12 +18,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
+
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
-     
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_s3_bucket_versioning" "terraform_state" {
@@ -81,6 +78,7 @@ resource "aws_iam_policy" "lambda_logging_policy" {
   name = "vsnandy_lambda_logging_policy"
   description = "Lambda logging policy to Cloudwatch"
   policy = data.aws_iam_policy_document.lambda_logging_policy_document.json
+  depends_on = [ aws_iam_role.lambda_role ]
 }
 
 // Attach lambda_logging_policy to the lambda_role
