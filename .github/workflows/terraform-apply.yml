@@ -26,9 +26,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
 
-      - name: Install AWS CLI v2
-        run: aws iam list-instance-profiles
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -40,7 +37,9 @@ jobs:
       - name: Terraform Import
         id: import
         run: |
-          terraform import aws_iam_role. 
+          terraform import aws_iam_role.vsnandy_lambda_role
+          terraform import aws_iam_policy.vsnandy_lambda_logging_policy
+          terraform import aws_lambda_function.vsnandy-lambda-api
 
       - name: Terraform Init
         id: init
