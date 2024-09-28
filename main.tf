@@ -18,19 +18,32 @@ provider "aws" {
   region = "us-east-1"
 }
 
-import {
-  to = aws_lambda_function.lambda_function
-  id = "vsnandy-lambda-api"
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "vsnandy-tfstate"
+     
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-import {
-  to = aws_iam_role.lambda_role
-  id = "vsnandy_lambda_role"
+resource "aws_s3_bucket_versioning" "terraform_state" {
+    bucket = aws_s3_bucket.terraform_state.id
+
+    versioning_configuration {
+      status = "Enabled"
+    }
 }
 
-import {
-  to = aws_iam_policy.lambda_logging_policy
-  id = aws_iam_policy.lambda_logging_policy.arn
+resource "aws_dynamodb_table" "terraform_state_lock" {
+  name           = "vsnandy-api-state"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
 }
 
 // Define an IAM policy for the lambda
