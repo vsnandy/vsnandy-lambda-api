@@ -4,6 +4,8 @@ variable "STAGE" {
   default = "LOCAL"
 }
 
+variable "lambda_logging_policy_arn" {}
+
 terraform {
   required_providers {
     aws = {
@@ -16,6 +18,27 @@ terraform {
 # Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
+}
+
+// IMPORTS
+import {
+  to = aws_iam_policy.lambda_logging_policy
+  id = var.lambda_logging_policy_arn
+}
+
+import {
+  to = aws_dynamodb_table.terraform-state-lock
+  id = "vsnandy-api-state"
+}
+
+import {
+  to = aws_s3_bucket.terraform-state
+  id = "vsnandy-tfstate"
+}
+
+import {
+  to = aws_iam_role.lambda_role
+  id = "vsnandy_lambda_role"
 }
 
 
