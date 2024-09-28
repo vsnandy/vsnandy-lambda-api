@@ -21,7 +21,7 @@ import {
 }
 
 import {
-  to = aws_iam_policy.lambda_logging_policy
+  to = aws_iam_policy.administator
   id = aws_iam_policy.lambda_logging_policy.arn
 }
 
