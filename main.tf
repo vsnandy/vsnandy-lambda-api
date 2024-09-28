@@ -4,8 +4,16 @@ variable "STAGE" {
   default = "LOCAL"
 }
 
-// Setup AWS as a Terraform provider
-// Pass in keys
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+# Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
 }
@@ -21,7 +29,7 @@ import {
 }
 
 import {
-  to = aws_iam_policy.administator
+  to = aws_iam_policy.lambda_logging_policy
   id = aws_iam_policy.lambda_logging_policy.arn
 }
 
