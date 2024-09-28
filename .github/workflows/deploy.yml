@@ -1,0 +1,9 @@
+name: deploy
+
+on:
+  push:
+    paths:
+      - "src/**"
+    branches: [main]
+
+jobs:
