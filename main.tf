@@ -29,12 +29,12 @@ import {
 }
 
 import {
-  to = aws_dynamodb_table.terraform-state-lock
+  to = aws_dynamodb_table.terraform_state_lock
   id = "vsnandy-api-state"
 }
 
 import {
-  to = aws_s3_bucket.terraform-state
+  to = aws_s3_bucket.terraform_state
   id = "vsnandy-tfstate"
 }
 
