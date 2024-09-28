@@ -1,8 +1,7 @@
-name: Terraform Apply
+name: Terraform Destroy
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch
 
 env:
   AWS_REGION: us-east-1
@@ -12,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  apply:
+  destroy:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,15 +28,14 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform fmt
-        id: fmt
-        run: terraform fmt
-        continue-on-error: true
-
       - name: Terraform Init
         id: init
         run: terraform init
 
-      - name: Terraform Apply
-        id: apply
-        run: terraform apply -auto-approve
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan
+      
+      - name: Terraform Destroy
+        id: destroy
+        run: terraform destroy -auto-approve

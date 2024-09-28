@@ -4,10 +4,46 @@ variable "STAGE" {
   default = "LOCAL"
 }
 
-// Setup AWS as a Terraform provider
-// Pass in keys
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+# Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
+}
+
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "vsnandy-tfstate"
+     
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_s3_bucket_versioning" "terraform_state" {
+    bucket = aws_s3_bucket.terraform_state.id
+
+    versioning_configuration {
+      status = "Enabled"
+    }
+}
+
+resource "aws_dynamodb_table" "terraform_state_lock" {
+  name           = "vsnandy-api-state"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
 }
 
 // Define an IAM policy for the lambda
