@@ -8,8 +8,6 @@ variable "STAGE" {
 // Pass in keys
 provider "aws" {
   region = "us-east-1"
-  access_key = var.STAGE == "LOCAL" ? "test" : "prod"
-  secret_key = var.STAGE == "LOCAL" ? "test" : "prod"
 }
 
 // Define an IAM policy for the lambda
