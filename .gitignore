@@ -1,10 +1,34 @@
+# Mac
 .idea/
-terraform/.terraform
-terraform/.terraform.lock.hcl
-terraform/tfplan
-terraform/zips/
-terraform/terraform.tfstate*
 .DS_Store
-terraform/.aws-sam-iacs
-terraform/localstack_data
+
+# SAM
 .aws-sam-iacs
+
+# zip files
+src/vsnandy_lambda.zip
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars
+*.tfvars
+*.tfvars.json
+
+# overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configs
+.terraformrx
+terraform.rc
+
+# Crash log files
+crash.log
+crash.*.log
