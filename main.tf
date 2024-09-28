@@ -43,6 +43,11 @@ import {
   id = "vsnandy_lambda_role"
 }
 
+import {
+  to = aws_lambda_function.lambda_function
+  id = "vsnandy-lambda-api"
+}
+
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
