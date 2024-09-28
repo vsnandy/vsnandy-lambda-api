@@ -45,3 +45,5 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan
+        env:
+          TF_VAR_lambda_logging_policy_arn: ${{ secrets.LAMBDA_LOGGING_POLICY_ARN }}
