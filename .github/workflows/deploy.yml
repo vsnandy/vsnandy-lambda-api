@@ -17,12 +17,12 @@ jobs:
 
     steps:
       - name: Git clone the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com
-          aws-region: $AWS_REGION
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::918470975264:role/github-actions-role
       - name: Initialize project and view terraform plan
         run: |
@@ -35,12 +35,12 @@ jobs:
 
     steps:
       - name: Git clone the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com
-          aws-region: $AWS_REGION
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::918470975264:role/github-actions-role
       - name: Initialize project and view terraform plan
         run: |
