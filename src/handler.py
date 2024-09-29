@@ -48,6 +48,10 @@ def handler(event, context):
         requestBody = event["body"]
         response = updateBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
 
+    elif httpMethod == "POST" and path == BETTOR_PATH + "/add-bets":
+        requestBody = event["body"]
+        response = addBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
+
     elif httpMethod == "POST" and path == BETTOR_PATH:
         requestBody = event["body"]
         response = addBettor(requestBody[PKEY])
@@ -151,6 +155,33 @@ def updateBetsForWeekByBettor(bettor, week, bets):
         logger.exception("Exception in PutBetsForWeekByBettor!!")
         logger.exception(e)
         build_response(400, json.dumps("Server error"))
+
+# Add a bet for a week
+def addBetsForWeekByBettor(bettor, week, bets):
+    try:
+        response = table.update_item(
+            Key = {
+                PKEY: bettor.upper(),
+                SKEY: week
+            },
+            UpdateExpression = f"set {IKEY} = list_append({IKEY}, :vals)",
+            ExpressionAttributeValues = {
+                ":vals": bets
+            },
+            ReturnValues="ALL_NEW"
+        )
+
+        body = {
+            "Operation": "APPEND",
+            "Message": "SUCCESS",
+            "AppendedAttributes": response
+        }
+
+        return build_response(200, body)
+    except Exception as e:
+        logger.exception("Exception in AddBetsForWeekByBettor!!")
+        logger.exception(e)
+        build_response(400, json.dumps("Server Error"))
 
 # Add a new Bettor to the DB
 def addBettor(bettor):
