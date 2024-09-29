@@ -126,7 +126,8 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
       "dynamodb:Scan",
       "dynamodb:BatchWriteItem",
       "dynamodb:PutItem",
-      "dynamodb:UpdateItem"
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem"
     ]
   }
 }
