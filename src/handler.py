@@ -204,5 +204,5 @@ def build_response(statusCode, body=None):
     }
 
     if body is not None:
-        response["body"] = json.dumps(body, cls=CustomEncoder)
+        response["body"] = json.dumps(body)
     return response
