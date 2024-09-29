@@ -5,6 +5,7 @@ import boto3
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 dynamodbTableName = "vsnandy_bets"
 dynamodb = boto3.resource("dynamodb")
@@ -16,6 +17,9 @@ def handler(event, context):
     logger.info(os.environ['AWS_LAMBDA_LOG_GROUP_NAME'])
     logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
     logger.info('*** EVENT ***')
+
+    event = json.loads(event)
+
     logger.info(event)
 
     httpMethod = event["httpMethod"]
