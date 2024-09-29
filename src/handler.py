@@ -91,7 +91,7 @@ def getBettor(bettor, week=None):
         if "Item" in response:
             return build_response(200, response["Item"])
         else:
-            return build_response(404, {"Message": "ProductId: {0}s not found".format(bettor.upper())})
+            return build_response(404, {"Message": "Bettor: {0}s not found".format(bettor.upper())})
     except Exception as e:
         logger.exception("Exception in GetBettor!!")
         logger.exception(e)
@@ -204,5 +204,5 @@ def build_response(statusCode, body=None):
     }
 
     if body is not None:
-        response["body"] = json.dumps(body)
+        response["body"] = body
     return response
