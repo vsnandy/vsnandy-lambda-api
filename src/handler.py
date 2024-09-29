@@ -51,7 +51,7 @@ def handler(event, context):
 
     elif httpMethod == "DELETE" and path == BETTOR_PATH:
         requestBody = event["body"]
-        response = deleteBettor(requestBody["bettor"])
+        response = deleteWeekForBettor(requestBody["bettor"], requestBody["week"])
 
     else:
         response = build_response(404, "Not Found")
@@ -172,12 +172,13 @@ def addBettor(bettor):
         logger.exception(e)
         build_response(400, json.dumps("Server error"))
 
-# Delete a Bettor from the DB
-def deleteBettor(bettor):
+# Delete a week for a bettor from the DB
+def deleteWeekForBettor(bettor, week):
     try:
         response = table.delete_item(
             Key = {
-                "Bettor": bettor.upper()
+                "Bettor": bettor.upper(),
+                "Week": week
             }
         )
 
