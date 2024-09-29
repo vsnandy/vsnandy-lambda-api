@@ -146,7 +146,6 @@ data "archive_file" "lambda_zip" {
 // Lambda Function URL
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
-  qualifier          = "my_alias"
   authorization_type = "NONE"
 
   cors {
