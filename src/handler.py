@@ -34,7 +34,7 @@ def handler(event, context):
         response = getBets()
 
     elif httpMethod == "POST" and path == BETS_PATH:
-        requestBody = json.loads(event["body"])
+        requestBody = event["body"]
 
         response = putBetsForWeekByBettor(requestBody["bettor"], requestBody["week"], requestBody["bets"])
 
@@ -42,15 +42,15 @@ def handler(event, context):
         response = getBettor(event["queryStringParameters"]["bettor"])
 
     elif httpMethod == "PATCH" and path == BETTOR_PATH:
-        requestBody = json.loads(event["body"])
+        requestBody = event["body"]
         response = updateBetsForWeekByBettor(requestBody["better"], requestBody["week"], requestBody["bets"])
 
     elif httpMethod == "POST" and path == BETTOR_PATH:
-        requestBody = json.loads(event["body"])
+        requestBody = event["body"]
         response = addBettor(requestBody["bettor"])
 
     elif httpMethod == "DELETE" and path == BETTOR_PATH:
-        requestBody = json.loads(event["body"])
+        requestBody = event["body"]
         response = deleteBettor(requestBody["bettor"])
 
     else:
