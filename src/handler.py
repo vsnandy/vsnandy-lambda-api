@@ -11,6 +11,10 @@ dynamodbTableName = "vsnandy_bets"
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(dynamodbTableName)
 
+PKEY = "Bettor"
+SKEY = "Week"
+IKEY = "Bets"
+
 def handler(event, context):
     # TODO: vsnandy-lambda-api
     logger.info("*** ENVIRONMENT VARIABLES ***")
@@ -35,23 +39,22 @@ def handler(event, context):
 
     elif httpMethod == "POST" and path == BETS_PATH:
         requestBody = event["body"]
-
-        response = putBetsForWeekByBettor(requestBody["bettor"], requestBody["week"], requestBody["bets"])
+        response = putBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
 
     elif httpMethod == "GET" and path == BETTOR_PATH:
-        response = getBettor(event["queryStringParameters"]["bettor"])
+        response = getBettor(event["queryStringParameters"][PKEY])
 
     elif httpMethod == "PATCH" and path == BETTOR_PATH:
         requestBody = event["body"]
-        response = updateBetsForWeekByBettor(requestBody["better"], requestBody["week"], requestBody["bets"])
+        response = updateBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
 
     elif httpMethod == "POST" and path == BETTOR_PATH:
         requestBody = event["body"]
-        response = addBettor(requestBody["bettor"])
+        response = addBettor(requestBody[PKEY])
 
     elif httpMethod == "DELETE" and path == BETTOR_PATH:
         requestBody = event["body"]
-        response = deleteWeekForBettor(requestBody["bettor"], requestBody["week"])
+        response = deleteWeekForBettor(requestBody[PKEY], requestBody[SKEY])
 
     else:
         response = build_response(404, "Not Found")
@@ -83,8 +86,8 @@ def getBettor(bettor, week=None):
     try:
         response = table.get_item(
             Key = {
-                "Bettor": bettor.upper(),
-                "Week": week
+                PKEY: bettor.upper(),
+                SKEY: week
             }
         )
 
@@ -102,9 +105,9 @@ def putBetsForWeekByBettor(bettor, week, bets):
     try:
         table.put_item(
             Item = {
-                "Bettor": bettor.upper(),
-                "Week": week,
-                "Bets": bets
+                PKEY: bettor.upper(),
+                SKEY: week,
+                IKEY: bets
             }
         )
 
@@ -112,9 +115,9 @@ def putBetsForWeekByBettor(bettor, week, bets):
             "Operation": "INSERT",
             "Message": "SUCCESS",
             "Item": {
-                "Bettor": bettor.upper(),
-                "Week": week,
-                "Bets": bets
+                PKEY: bettor.upper(),
+                SKEY: week,
+                IKEY: bets
             }
         }
         return build_response(200, body)
@@ -128,7 +131,7 @@ def updateBetsForWeekByBettor(bettor, week, bets):
     try:
         response = table.update_item(
             Key = {
-                "Bettor": bettor.upper()
+                PKEY: bettor.upper()
             },
 
             UpdateExpression = "set {0}s = :value".format(week),
@@ -154,9 +157,9 @@ def addBettor(bettor):
     try:
         table.put_item(
             Item = {
-                "Bettor": bettor.upper(),
-                "Week": "TOTAL",
-                "Bets": []
+                PKEY: bettor.upper(),
+                SKEY: "TOTAL",
+                IKEY: []
             }
         )
 
@@ -177,8 +180,8 @@ def deleteWeekForBettor(bettor, week):
     try:
         response = table.delete_item(
             Key = {
-                "Bettor": bettor.upper(),
-                "Week": week
+                PKEY: bettor.upper(),
+                SKEY: week
             }
         )
 
