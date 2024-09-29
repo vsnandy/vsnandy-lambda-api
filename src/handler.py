@@ -133,8 +133,7 @@ def updateBetsForWeekByBettor(bettor, week, bets):
             Key = {
                 PKEY: bettor.upper()
             },
-
-            UpdateExpression = "set {0}s = :value".format(week),
+            UpdateExpression = "set {0} = :value".format(week),
             ExpressionAttributeValues = {
                 ":value": bets
             },
