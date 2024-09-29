@@ -94,12 +94,30 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = data.aws_iam_policy_document.lambda_policy.json
 }
 
-// IAM policy for logging from the lambda
+// IAM policy definitions
 data "aws_iam_policy_document" "lambda_logging_policy_document" {
+  // IAM policy for logging from the lambda
   statement {
+    sid = "Logging"
     effect = "Allow"
     resources = ["arn:aws:logs:*:*:*"]
     actions = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+  }
+
+  // IAM policy for lambda => dynamodb
+  statement {
+    sid = "DynamoDB"
+    effect = "Allow"
+    resources = aws_dynamodb_table.vsnandy_db.arn
+    actions = [
+      "dynamodb:BatchGetItem",
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem"
+    ]
   }
 }
 
@@ -125,6 +143,22 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/src/vsnandy_lambda.zip"
 }
 
+// Lambda Function URL
+resource "aws_lambda_function_url" "lambda_url" {
+  function_name      = aws_lambda_function.lambda_function.arn
+  qualifier          = "my_alias"
+  authorization_type = "NONE"
+
+  cors {
+    allow_credentials = true
+    allow_origins     = ["https://vsnandy.github.io"]
+    allow_methods     = ["*"]
+    allow_headers     = ["date", "keep-alive"]
+    expose_headers    = ["keep-alive", "date"]
+    max_age           = 86400
+  }
+}
+
 // Create the lambda function
 resource "aws_lambda_function" "lambda_function" {
   filename = "${path.module}/src/vsnandy_lambda.zip"
@@ -133,6 +167,26 @@ resource "aws_lambda_function" "lambda_function" {
   handler = "handler.handler"
   runtime = "python3.10"
   depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
+}
+
+// DynamoDB deployment
+resource "aws_dynamodb_table" "vsnandy_db" {
+  name           = "vsnandy_bets"
+  billing_mode = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "Bettor"
+  range_key      = "Week"
+
+  attribute {
+    name = "Bettor"
+    type = "S"
+  }
+
+  attribute {
+    name = "Week"
+    type = "S"
+  }
 }
 
 // OPTIONAL: Outputs for Terraform once the apply has completed
