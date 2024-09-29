@@ -18,8 +18,6 @@ def handler(event, context):
     logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
     logger.info('*** EVENT ***')
 
-    event = json.loads(event)
-
     logger.info(event)
 
     httpMethod = event["httpMethod"]
