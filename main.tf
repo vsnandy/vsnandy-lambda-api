@@ -34,6 +34,11 @@ import {
 }
 
 import {
+  to = aws_dynamodb_table.vsnandy_db
+  id = "vsnandy_bets"
+}
+
+import {
   to = aws_s3_bucket.terraform_state
   id = "vsnandy-tfstate"
 }
