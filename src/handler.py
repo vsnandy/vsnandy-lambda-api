@@ -131,9 +131,10 @@ def updateBetsForWeekByBettor(bettor, week, bets):
     try:
         response = table.update_item(
             Key = {
-                PKEY: bettor.upper()
+                PKEY: bettor.upper(),
+                SKEY: week
             },
-            UpdateExpression = "set {0} = :value".format(week),
+            UpdateExpression = f"set {IKEY} = :value",
             ExpressionAttributeValues = {
                 ":value": bets
             },
