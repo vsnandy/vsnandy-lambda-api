@@ -4,6 +4,7 @@
 
 # SAM
 .aws-sam-iacs
+.aws-sam
 
 # zip files
 src/vsnandy_lambda.zip

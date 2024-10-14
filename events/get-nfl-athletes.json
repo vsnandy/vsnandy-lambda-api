@@ -1,0 +1,13 @@
+{
+    "requestContext": {
+        "http": {
+            "method": "GET",
+            "path": "/athletes"
+        }
+    },
+    "queryStringParameters": {
+        "sport": "football",
+        "league": "nfl",
+        "limit": "10"
+    }
+}
