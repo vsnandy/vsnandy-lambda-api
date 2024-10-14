@@ -2,11 +2,13 @@ import os
 import json
 import logging
 import boto3
-import requests
+import urllib3
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+http = urllib3.PoolManager()
 
 dynamodbTableName = "vsnandy_bets"
 dynamodb = boto3.resource("dynamodb")
@@ -269,7 +271,7 @@ def deleteWeekForBettor(bettor, week):
 # GET /athletes
 def getAllPlayers(sport, league, limit):
     try:
-        res = requests.get(f"{ESPN_API_URL}/{sport}/{league}/athletes?limit={limit}")
+        res = http.request("GET", f"{ESPN_API_URL}/{sport}/{league}/athletes?limit={limit}")
         response = res.json()
 
         print("Response Keys:", response.keys())
