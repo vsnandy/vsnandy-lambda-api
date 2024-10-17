@@ -157,16 +157,7 @@ data "archive_file" "lambda_zip" {
 // Lambda Function URL
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
-  authorization_type = "NONE"
-
-  cors {
-    allow_credentials = true
-    allow_origins     = ["https://vsnandy.github.io"]
-    allow_methods     = ["*"]
-    allow_headers     = ["date", "keep-alive"]
-    expose_headers    = ["keep-alive", "date"]
-    max_age           = 86400
-  }
+  authorization_type = "AWS_IAM"
 }
 
 // Create the lambda function
