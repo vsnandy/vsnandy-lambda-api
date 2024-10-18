@@ -158,7 +158,7 @@ data "archive_file" "lambda_zip" {
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
   authorization_type = "AWS_IAM"
-  
+
   cors {
     allow_credentials = true
     allow_origins = ["http:localhost:3000", "https://vsnandy.github.io"]
@@ -195,7 +195,7 @@ data "aws_iam_policy_document" "lambda_function_url_access_policy_doc" {
 resource "aws_iam_policy" "lambda_function_url_access_policy" {
   name = "vsnandy_lambda_api_function_url_access_policy"
   description = "IAM policy to access vsnandy lambda api function url. Will be attached to the lambda_function_url_access_role."
-  policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc
+  policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
 }
 
 // DynamoDB deployment
