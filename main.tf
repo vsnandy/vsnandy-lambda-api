@@ -278,7 +278,7 @@ resource "aws_cognito_user_pool" "pool" {
   }
 
   verification_message_template {
-    default_email_option = "CONFIRM_WITH_CODE"g
+    default_email_option = "CONFIRM_WITH_CODE"
   }
 }
 
