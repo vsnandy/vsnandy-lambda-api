@@ -289,6 +289,11 @@ resource "aws_cognito_user_pool_client" "client" {
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"
   ]
+  token_validity_units {
+    access_token = "minutes"
+    id_token = "minutes"
+    refresh_token = "days"
+  }
 }
 
 // API GATEWAY RESOURCES
