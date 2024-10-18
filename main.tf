@@ -58,6 +58,11 @@ import {
   id = "vsnandy-lambda-api"
 }
 
+import {
+  to = aws_iam_role.vsnandy-admin-role
+  id = "vsnandy-admin-role"
+}
+
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
@@ -196,6 +201,46 @@ resource "aws_iam_policy" "lambda_function_url_access_policy" {
   name = "vsnandy_lambda_api_function_url_access_policy"
   description = "IAM policy to access vsnandy lambda api function url. Will be attached to the lambda_function_url_access_role."
   policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
+}
+
+// Define an IAM policy for the lambda
+data "aws_iam_policy_document" "vsnandy-admin-policy" { 
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "Federated"
+      identifiers = ["cognito-identity.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    condition {
+      test = "StringEquals"
+      variable = "cognito-identity.amazonaws.com:aud"
+      values = ["us-east-1:ca640fd6-c0c7-46b8-a721-9dd4ff004ddf"]
+    }
+
+    condition {
+      test = "ForAnyValue:StringLike"
+      variable = "cognito-identity.amazonaws.com:amr"
+      values = ["authenticated"]
+    }
+  }
+}
+
+// Define an IAM role for the lambda
+// Assign the above policy as the assumed role for the lambda
+resource "aws_iam_role" "vsnandy-admin-role" {
+  name = "vsnandy-admin-role"
+  path = "/service-role/"
+  assume_role_policy = data.aws_iam_policy_document.vsnandy-admin-policy.json
+}
+
+// Attach lambda_logging_policy to the lambda_role
+resource "aws_iam_role_policy_attachment" "attach_lambda_function_url_policy" {
+  role = aws_iam_role.vsnandy-admin-role.name
+  policy_arn = aws_iam_policy.lambda_function_url_access_policy.arn
 }
 
 // DynamoDB deployment
