@@ -65,6 +65,8 @@ import {
   id = "vsnandy-lambda-api"
 }
 
+/*
+
 import {
   to = aws_lambda_function_url.lambda_url
   id = "vsnandy-lambda-api"
@@ -79,6 +81,8 @@ import {
   to = aws_iam_policy.lambda_function_url_access_policy
   id = "${var.lambda_function_url_access_policy_arn}"
 }
+
+*/
 
 
 resource "aws_s3_bucket" "terraform_state" {
@@ -208,6 +212,7 @@ resource "aws_dynamodb_table" "vsnandy_db" {
 
 // DESTROY THE BELOW
 
+/*
 // Lambda Function URL
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
@@ -282,7 +287,7 @@ resource "aws_iam_role_policy_attachment" "attach_lambda_function_url_policy" {
   role = aws_iam_role.vsnandy-admin-role.name
   policy_arn = aws_iam_policy.lambda_function_url_access_policy.arn
 }
-
+*/
 // DESTROY THE ABOVE
 
 // OPTIONAL: Outputs for Terraform once the apply has completed
