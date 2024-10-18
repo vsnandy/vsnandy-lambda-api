@@ -63,6 +63,11 @@ import {
   id = "vsnandy-admin-role"
 }
 
+import {
+  to = aws_iam_policy.lambda_function_url_access_policy
+  id = "vsnandy_lambda_api_function_url_access_policy"
+}
+
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
