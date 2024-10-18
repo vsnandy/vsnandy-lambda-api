@@ -8,11 +8,17 @@ variable "lambda_logging_policy_arn" {
   type = string
 }
 
-/*
-variable "lambda_function_url_access_policy_arn" {
+variable "vsnandy_gw_id" {
   type = string
 }
-*/
+
+variable "vsnandy_user_pool_id" {
+  type = string
+}
+
+variable "vsnandy_user_pool_client_id" {
+  type = string
+}
 
 terraform {
   required_providers {
@@ -67,25 +73,25 @@ import {
   id = "vsnandy-lambda-api"
 }
 
-/*
-
 import {
-  to = aws_lambda_function_url.lambda_url
-  id = "vsnandy-lambda-api"
+  to = aws_apigatewayv2_api.api
+  id = "${var.vsnandy_gw_id}"
 }
 
 import {
-  to = aws_iam_role.vsnandy-admin-role
-  id = "vsnandy-admin-role"
+  to = aws_lambda_permission.apigw
+  id = "vsnandy-lambda-api/terraform-20241018154650326500000001"
 }
 
 import {
-  to = aws_iam_policy.lambda_function_url_access_policy
-  id = "${var.lambda_function_url_access_policy_arn}"
+  to = aws_cognito_user_pool.pool
+  id = 
 }
 
-*/
-
+import {
+  to = aws_cognito_user_pool_client.client
+  id = "${var.vsnandy_user_pool_client_id}"
+}
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
@@ -212,12 +218,38 @@ resource "aws_dynamodb_table" "vsnandy_db" {
   }
 }
 
+// COGNITO RESOURCES
+resource "aws_cognito_user_pool" "pool" {
+  name = "vsnandy-users"
+}
+
+resource "aws_cognito_user_pool_client" "client" {
+  name = "website"
+  user_pool_id = aws_cognito_user_pool.pool.id
+  explicit_auth_flows = [
+    "ALLOW_USER_SRP_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH"
+  ]
+}
+
 // API GATEWAY RESOURCES
 # HTTP API
 resource "aws_apigatewayv2_api" "api" {
   name = "vsnandy-api"
   protocol_type = "HTTP"
   target = aws_lambda_function.lambda_function.arn
+}
+
+# API GW Authorizer 
+resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
+  name = "vsnandy_api_gw_cognito_authorizer"
+  api_id = "${var.vsnandy_gw_id}"
+  authorizer_type = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.client.id]
+  }
 }
 
 # Permission
@@ -228,86 +260,6 @@ resource "aws_lambda_permission" "apigw" {
 
   source_arn = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
 }
-
-// DESTROY THE BELOW
-
-/*
-// Lambda Function URL
-resource "aws_lambda_function_url" "lambda_url" {
-  function_name      = aws_lambda_function.lambda_function.arn
-  authorization_type = "AWS_IAM"
-
-  cors {
-    allow_credentials = true
-    allow_origins = ["http://localhost:3000", "https://vsnandy.github.io"]
-    allow_methods = ["*"]
-    allow_headers = ["date", "keep-alive"]
-    expose_headers = ["keep-alive", "date"]
-    max_age = 86400
-  } 
-}
-
-// IAM policy document for lambda function url access
-data "aws_iam_policy_document" "lambda_function_url_access_policy_doc" {
-  statement {
-    sid = "IAMRole"
-    effect = "Allow"
-    actions = [
-      "lambda:InvokeFunctionUrl"
-    ]
-    resources = [aws_lambda_function_url.lambda_url.function_arn]
-  }
-}
-
-// Policy for calling lambda function url
-resource "aws_iam_policy" "lambda_function_url_access_policy" {
-  name = "vsnandy_lambda_api_function_url_access_policy"
-  description = "IAM policy to access vsnandy lambda api function url. Will be attached to the lambda_function_url_access_role."
-  policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
-}
-
-
-// Define an IAM policy for the lambda
-data "aws_iam_policy_document" "vsnandy-admin-policy" { 
-  statement {
-    effect = "Allow"
-
-    principals {
-      type = "Federated"
-      identifiers = ["cognito-identity.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    condition {
-      test = "StringEquals"
-      variable = "cognito-identity.amazonaws.com:aud"
-      values = ["us-east-1:ca640fd6-c0c7-46b8-a721-9dd4ff004ddf"]
-    }
-
-    condition {
-      test = "ForAnyValue:StringLike"
-      variable = "cognito-identity.amazonaws.com:amr"
-      values = ["authenticated"]
-    }
-  }
-}
-
-// Define an IAM role for the lambda
-// Assign the above policy as the assumed role for the lambda
-resource "aws_iam_role" "vsnandy-admin-role" {
-  name = "vsnandy-admin-role"
-  path = "/service-role/"
-  assume_role_policy = data.aws_iam_policy_document.vsnandy-admin-policy.json
-}
-
-// Attach lambda_function_url_policy to the lambda_role
-resource "aws_iam_role_policy_attachment" "attach_lambda_function_url_policy" {
-  role = aws_iam_role.vsnandy-admin-role.name
-  policy_arn = aws_iam_policy.lambda_function_url_access_policy.arn
-}
-*/
-// DESTROY THE ABOVE
 
 // OPTIONAL: Outputs for Terraform once the apply has completed
 
@@ -322,143 +274,3 @@ output "terraform_aws_role_arn_output" {
 output "terraform_logging_arn_output" {
   value = aws_iam_policy.lambda_logging_policy.arn
 }
-
-
-///////////////////////////
-///////////////////////////
-///////////////////////////
-///////////////////////////
-
-/*
-variable "STAGE" {
-  type    = string
-  default = "local"
-}
-
-provider "aws" {
-  alias = "localstack"
-  region = "us-east-1"  # You can set this to any AWS region
-
-  // Skip AWS credentials validation if we're running locally
-  skip_credentials_validation = var.STAGE == "local"
-  skip_metadata_api_check     = var.STAGE == "local"
-  skip_requesting_account_id  = var.STAGE == "local"
-
-  // You can use these fake keys for local AWS testing
-  access_key = var.STAGE == "local" ? "testKey" : "realKeyForProduction"
-  secret_key = var.STAGE == "local" ? "testSecret" : "realSecretForProduction"
-
-  endpoints {
-    dynamodb   = var.STAGE == "local" ? "http://localhost:4566" : null
-    lambda     = var.STAGE == "local" ? "http://localhost:4574" : null
-    cloudwatch = var.STAGE == "local" ? "http://localhost:4582" : null
-    iam        = var.STAGE == "local" ? "http://localhost:4593" : null
-  }
-}
-
-terraform {
-  backend "s3" {
-    bucket = "vsnandy-lambda"
-    key    = "tfstate/terraform.tfstate"
-    region = "us-east-1"
-  }
-}
-
-
-resource "aws_s3_bucket" "terraform_state" {
-  bucket = "vsnandy-lambda"
-
-  # Prevent accidental deletion of this S3 bucket
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "aws_dynamodb_table" "bets_table" {
-  provider = aws.localstack  # Use the LocalStack-specific provider alias
-  name           = "bets"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "name"
-  range_key      = "week"
-
-  attribute {
-    name = "name"
-    type = "S"
-  }
-
-  attribute {
-    name = "week"
-    type = "S"
-  }
-}
-
-data "aws_iam_policy_document" "assume_role" { 
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "vsnandy_lambda_role" {
-  name               = "vsnandy_lambda_role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
-
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_file = "../lambda/src/handler.py"
-  output_path = "../lambda/src/build/lambda.zip"
-}
-
-resource "aws_lambda_function" "vsnandy_lambda" {
-  # If the file is not in the current working directory you will need to include a
-  # path.module in the filename.
-  filename      = "../lambda/src/build/lambda.zip"
-  function_name = "vsnandy_lambda"
-  role          = aws_iam_role.vsnandy_lambda_role.arn
-  handler       = "handler.handler"
-  timeout       = 300
-
-  source_code_hash = data.archive_file.lambda.output_base64sha256
-
-  runtime = "python3.8"
-}
-
-resource "aws_cloudwatch_log_group" "vsnandy_lambda_loggroup" {
-  name              = "/aws/lambda/${aws_lambda_function.vsnandy_lambda.function_name}"
-  retention_in_days = 3
-}
-
-data "aws_iam_policy_document" "vsnandy_lambda_policy" {
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    resources = [
-      aws_cloudwatch_log_group.vsnandy_lambda_loggroup.arn,
-      "${aws_cloudwatch_log_group.vsnandy_lambda_loggroup.arn}:*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "vsnandy_lambda_role_policy" {
-  policy = data.aws_iam_policy_document.vsnandy_lambda_policy.json
-  role   = aws_iam_role.vsnandy_lambda_role.id
-  name   = "vsnandy-lambda-policy"
-}
-
-resource "aws_lambda_function_url" "vsnandy_lambda_function_url" {
-  function_name      = aws_lambda_function.vsnandy_lambda.id
-  authorization_type = "NONE"
-  cors {
-    allow_origins = ["*"]
-  }
-}
-*/

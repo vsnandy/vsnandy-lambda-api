@@ -37,9 +37,15 @@ jobs:
         run: terraform plan
         env:
           TF_VAR_lambda_logging_policy_arn: ${{ secrets.LAMBDA_LOGGING_POLICY_ARN }}
+          TF_VAR_vsnandy_gw_id: ${{ secrets.VSNANDY_GW_ID }}
+          TF_VAR_vsnandy_user_pool_client_id: ${{ secrets.VSNANDY_USER_POOL_CLIENT_ID }}
+          TF_VAR_vsnandy_user_pool_id: ${{ secrets.VSNANDY_USER_POOL_ID }}
       
       - name: Terraform Destroy
         id: destroy
         run: terraform destroy -auto-approve
         env:
           TF_VAR_lambda_logging_policy_arn: ${{ secrets.LAMBDA_LOGGING_POLICY_ARN }}
+          TF_VAR_vsnandy_gw_id: ${{ secrets.VSNANDY_GW_ID }}
+          TF_VAR_vsnandy_user_pool_client_id: ${{ secrets.VSNANDY_USER_POOL_CLIENT_ID }}
+          TF_VAR_vsnandy_user_pool_id: ${{ secrets.VSNANDY_USER_POOL_ID }}
