@@ -212,7 +212,7 @@ resource "aws_dynamodb_table" "vsnandy_db" {
 
 // API GATEWAY RESOURCES
 # HTTP API
-resource "aws_api_gatewayv2_api" "api" {
+resource "aws_apigatewayv2_api" "api" {
   name = "vsnandy-api"
   protocol_type = "HTTP"
   target = aws_lambda_function.lambda_function.arn
