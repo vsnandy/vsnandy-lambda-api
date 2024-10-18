@@ -210,6 +210,23 @@ resource "aws_dynamodb_table" "vsnandy_db" {
   }
 }
 
+// API GATEWAY RESOURCES
+# HTTP API
+resource "aws_api_gatewayv2_api" "api" {
+  name = "vsnandy-api"
+  protocol_type = "HTTP"
+  target = aws_lambda_function.lambda_function.arn
+}
+
+# Permission
+resource "aws_lambda_permission" "apigw" {
+  action = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function.arn
+  principal = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
+}
+
 // DESTROY THE BELOW
 
 /*
