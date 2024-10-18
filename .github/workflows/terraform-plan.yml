@@ -47,4 +47,3 @@ jobs:
         run: terraform plan
         env:
           TF_VAR_lambda_logging_policy_arn: ${{ secrets.LAMBDA_LOGGING_POLICY_ARN }}
-          TF_VAR_lambda_function_url_access_policy_arn: ${{ secrets.LAMBDA_FUNCTION_URL_ACCESS_POLICY_ARN }}
