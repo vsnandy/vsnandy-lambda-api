@@ -90,7 +90,7 @@ import {
 
 import {
   to = aws_cognito_user_pool_client.client
-  id = "${var.vsnandy_user_pool_client_id}"
+  id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
 resource "aws_s3_bucket" "terraform_state" {
