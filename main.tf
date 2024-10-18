@@ -20,6 +20,10 @@ variable "vsnandy_user_pool_client_id" {
   type = string
 }
 
+variable "default_route_id" {
+  type = string
+}
+
 terraform {
   required_providers {
     aws = {
@@ -92,6 +96,13 @@ import {
   to = aws_cognito_user_pool_client.client
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
+
+/*
+import {
+  to = aws_apigatewayv2_route.default_route
+  id = "${var.vsnandy_gw_id}/${var.default_route_id}"
+}
+*/
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
@@ -324,7 +335,6 @@ resource "aws_apigatewayv2_integration" "api_gw_int" {
   connection_type = "INTERNET"
 
 }
-*/
 
 # Add auth to API GW default path
 resource "aws_apigatewayv2_route" "default_route" {
@@ -334,6 +344,7 @@ resource "aws_apigatewayv2_route" "default_route" {
   authorization_type = "JWT"
   authorizer_id = aws_apigatewayv2_authorizer.api_gw_auth.id
 }
+*/
 
 # Permission
 resource "aws_lambda_permission" "apigw" {

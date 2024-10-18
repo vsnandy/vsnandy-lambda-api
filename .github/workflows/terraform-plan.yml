@@ -50,3 +50,4 @@ jobs:
           TF_VAR_vsnandy_gw_id: ${{ secrets.VSNANDY_GW_ID }}
           TF_VAR_vsnandy_user_pool_client_id: ${{ secrets.VSNANDY_USER_POOL_CLIENT_ID }}
           TF_VAR_vsnandy_user_pool_id: ${{ secrets.VSNANDY_USER_POOL_ID }}
+          TF_VAR_default_route_id: ${{ secrets.DEFAULT_ROUTE_ID }}
