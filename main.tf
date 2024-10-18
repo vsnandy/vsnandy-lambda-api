@@ -203,7 +203,6 @@ resource "aws_iam_policy" "lambda_function_url_access_policy" {
   policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
 }
 
-/*
 // Define an IAM policy for the lambda
 data "aws_iam_policy_document" "vsnandy-admin-policy" { 
   statement {
@@ -234,9 +233,9 @@ data "aws_iam_policy_document" "vsnandy-admin-policy" {
 // Assign the above policy as the assumed role for the lambda
 resource "aws_iam_role" "vsnandy-admin-role" {
   name = "vsnandy-admin-role"
+  path = "/service-role/"
   assume_role_policy = data.aws_iam_policy_document.vsnandy-admin-policy.json
 }
-*/
 
 // Attach lambda_logging_policy to the lambda_role
 resource "aws_iam_role_policy_attachment" "attach_lambda_function_url_policy" {
