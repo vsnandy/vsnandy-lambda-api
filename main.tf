@@ -21,6 +21,14 @@ terraform {
   }
 }
 
+terraform {
+  backend "s3" {
+    bucket = "vsnandy-tfstate"
+    key = "states"
+    region = "us-east-1"
+  }
+}
+
 # Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
@@ -168,6 +176,38 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/src/vsnandy_lambda.zip"
 }
 
+// Create the lambda function
+resource "aws_lambda_function" "lambda_function" {
+  filename = "${path.module}/src/vsnandy_lambda.zip"
+  function_name = "vsnandy-lambda-api"
+  role = aws_iam_role.lambda_role.arn
+  handler = "handler.handler"
+  runtime = "python3.10"
+  depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
+}
+
+// DynamoDB deployment
+resource "aws_dynamodb_table" "vsnandy_db" {
+  name           = "vsnandy_bets"
+  billing_mode = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "Bettor"
+  range_key      = "Week"
+
+  attribute {
+    name = "Bettor"
+    type = "S"
+  }
+
+  attribute {
+    name = "Week"
+    type = "S"
+  }
+}
+
+// DESTROY THE BELOW
+
 // Lambda Function URL
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
@@ -181,16 +221,6 @@ resource "aws_lambda_function_url" "lambda_url" {
     expose_headers = ["keep-alive", "date"]
     max_age = 86400
   } 
-}
-
-// Create the lambda function
-resource "aws_lambda_function" "lambda_function" {
-  filename = "${path.module}/src/vsnandy_lambda.zip"
-  function_name = "vsnandy-lambda-api"
-  role = aws_iam_role.lambda_role.arn
-  handler = "handler.handler"
-  runtime = "python3.10"
-  depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
 }
 
 // IAM policy document for lambda function url access
@@ -211,6 +241,7 @@ resource "aws_iam_policy" "lambda_function_url_access_policy" {
   description = "IAM policy to access vsnandy lambda api function url. Will be attached to the lambda_function_url_access_role."
   policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
 }
+
 
 // Define an IAM policy for the lambda
 data "aws_iam_policy_document" "vsnandy-admin-policy" { 
@@ -246,31 +277,13 @@ resource "aws_iam_role" "vsnandy-admin-role" {
   assume_role_policy = data.aws_iam_policy_document.vsnandy-admin-policy.json
 }
 
-// Attach lambda_logging_policy to the lambda_role
+// Attach lambda_function_url_policy to the lambda_role
 resource "aws_iam_role_policy_attachment" "attach_lambda_function_url_policy" {
   role = aws_iam_role.vsnandy-admin-role.name
   policy_arn = aws_iam_policy.lambda_function_url_access_policy.arn
 }
 
-// DynamoDB deployment
-resource "aws_dynamodb_table" "vsnandy_db" {
-  name           = "vsnandy_bets"
-  billing_mode = "PROVISIONED"
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "Bettor"
-  range_key      = "Week"
-
-  attribute {
-    name = "Bettor"
-    type = "S"
-  }
-
-  attribute {
-    name = "Week"
-    type = "S"
-  }
-}
+// DESTROY THE ABOVE
 
 // OPTIONAL: Outputs for Terraform once the apply has completed
 
