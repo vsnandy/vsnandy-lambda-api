@@ -161,7 +161,7 @@ resource "aws_lambda_function_url" "lambda_url" {
 
   cors {
     allow_credentials = true
-    allow_origins = ["http:localhost:3000", "https://vsnandy.github.io"]
+    allow_origins = ["http://localhost:3000", "https://vsnandy.github.io"]
     allow_methods = ["*"]
     allow_headers = ["date", "keep-alive"]
     expose_headers = ["keep-alive", "date"]
