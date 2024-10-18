@@ -3,6 +3,7 @@ import json
 import logging
 import boto3
 import urllib3
+from boto3.dynamodb.conditions import Key
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -91,7 +92,7 @@ def handler(event, context):
 
 
 # Scan table for all bets
-# GET /paths
+# GET /bets
 def getBets():
     try:
         response = table.scan()
@@ -102,7 +103,7 @@ def getBets():
             result.extend(response["Items"])
 
         body = {
-            "bets": response
+            "bets": result
         }
 
         return build_response(200, body)
@@ -114,13 +115,10 @@ def getBets():
 
 # Get all bets for a given Bettor
 # GET /bettor?Bettor={}
-def getBettor(bettor, week=None):
+def getBettor(bettor):
     try:
-        response = table.get_item(
-            Key = {
-                PKEY: bettor.upper(),
-                SKEY: week
-            }
+        response = table.query(
+            KeyConditionExpression=Key("Bettor").eq(bettor)
         )
 
         if "Item" in response:
