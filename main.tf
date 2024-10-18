@@ -333,7 +333,6 @@ resource "aws_apigatewayv2_integration" "api_gw_int" {
   connection_type = "INTERNET"
 
 }
-*/
 
 # Add auth to API GW default path
 resource "aws_apigatewayv2_route" "default_route" {
@@ -343,6 +342,7 @@ resource "aws_apigatewayv2_route" "default_route" {
   authorization_type = "JWT"
   authorizer_id = aws_apigatewayv2_authorizer.api_gw_auth.id
 }
+*/
 
 # Permission
 resource "aws_lambda_permission" "apigw" {
