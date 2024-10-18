@@ -85,7 +85,7 @@ import {
 
 import {
   to = aws_cognito_user_pool.pool
-  id = 
+  id = "${var.vsnandy_user_pool_id}"
 }
 
 import {
@@ -249,6 +249,7 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
 
   jwt_configuration {
     audience = [aws_cognito_user_pool_client.client.id]
+    issuer = "https://${aws_cognito_user_pool.pool.endpoint}"
   }
 }
 
