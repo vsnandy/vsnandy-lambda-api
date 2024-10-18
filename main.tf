@@ -182,7 +182,7 @@ resource "aws_lambda_function" "lambda_function" {
 // IAM policy document for lambda function url access
 data "aws_iam_policy_document" "lambda_function_url_access_policy_doc" {
   statement {
-    sid = "IAM Role"
+    sid = "IAMRole"
     effect = "Allow"
     actions = [
       "lambda:InvokeFunctionUrl"
