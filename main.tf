@@ -51,7 +51,7 @@ import {
 }
 
 import {
-  to = aws_s3_bucket.terraform_stateg
+  to = aws_s3_bucket.terraform_state
   id = "vsnandy-tfstate"
 }
 
