@@ -278,7 +278,7 @@ resource "aws_cognito_user_pool" "pool" {
   }
 
   verification_message_template {
-    default_email_option = "CONFIRM_WITH_CODE"
+    default_email_option = "CONFIRM_WITH_CODE"g
   }
 }
 
@@ -315,6 +315,24 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
     audience = [aws_cognito_user_pool_client.client.id]
     issuer = "https://${aws_cognito_user_pool.pool.endpoint}"
   }
+}
+
+/*
+resource "aws_apigatewayv2_integration" "api_gw_int" {
+  api_id = aws_apigatewayv2_api.gateway.id
+  integration_type = "AWS_PROXY"
+  connection_type = "INTERNET"
+
+}
+*/
+
+# Add auth to API GW default path
+resource "aws_apigatewayv2_route" "default_route" {
+  api_id = aws_apigatewayv2_api.api.id
+  route_key = "$default"
+
+  authorization_type = "JWT"
+  authorizer_id = aws_apigatewayv2_authorizer.auth.id
 }
 
 # Permission
