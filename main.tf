@@ -20,6 +20,10 @@ variable "vsnandy_user_pool_client_id" {
   type = string
 }
 
+variable "default_route_id" {
+  type = string
+}
+
 terraform {
   required_providers {
     aws = {
@@ -91,6 +95,11 @@ import {
 import {
   to = aws_cognito_user_pool_client.client
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
+}
+
+import {
+  to = aws_apigatewayv2_route.default_route
+  id = "${var.default_route_id}"
 }
 
 resource "aws_s3_bucket" "terraform_state" {
