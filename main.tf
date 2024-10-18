@@ -98,7 +98,7 @@ data "aws_iam_policy_document" "lambda_policy" {
 }
 
 // Define an IAM role for the lambda
-// Assign the above policy as the asummed role for the lambda
+// Assign the above policy as the assumed role for the lambda
 resource "aws_iam_role" "lambda_role" {
   name = "vsnandy_lambda_role"
   assume_role_policy = data.aws_iam_policy_document.lambda_policy.json
@@ -158,6 +158,15 @@ data "archive_file" "lambda_zip" {
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
   authorization_type = "AWS_IAM"
+
+  cors {
+    allow_credentials = true
+    allow_origins = ["http:localhost:3000", "https://vsnandy.github.io"]
+    allow_methods = ["*"]
+    allow_headers = ["date", "keep-alive"]
+    expose_headers = ["keep-alive", "date"]
+    max_age = 86400
+  } 
 }
 
 // Create the lambda function
@@ -168,6 +177,25 @@ resource "aws_lambda_function" "lambda_function" {
   handler = "handler.handler"
   runtime = "python3.10"
   depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
+}
+
+// IAM policy document for lambda function url access
+data "aws_iam_policy_document" "lambda_function_url_access_policy_doc" {
+  statement {
+    sid = "IAM Role"
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunctionUrl"
+    ]
+    resources = [aws_lambda_function_url.lambda_url.function_arn]
+  }
+}
+
+// Policy for calling lambda function url
+resource "aws_iam_policy" "lambda_function_url_access_policy" {
+  name = "vsnandy_lambda_api_function_url_access_policy"
+  description = "IAM policy to access vsnandy lambda api function url. Will be attached to the lambda_function_url_access_role."
+  policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
 }
 
 // DynamoDB deployment
