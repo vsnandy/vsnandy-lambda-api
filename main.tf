@@ -97,10 +97,12 @@ import {
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
+/*
 import {
   to = aws_apigatewayv2_route.default_route
   id = "${var.vsnandy_gw_id}/${var.default_route_id}"
 }
+*/
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
