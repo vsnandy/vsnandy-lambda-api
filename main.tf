@@ -57,6 +57,7 @@ import {
   id = "vsnandy-lambda-api"
 }
 
+/*
 import {
   to = aws_lambda_function_url.lambda_url
   id = "vsnandy-lambda-api"
@@ -71,6 +72,7 @@ import {
   to = aws_iam_policy.lambda_function_url_access_policy
   id = "${var.lambda_function_url_access_policy_arn}"
 }
+*/
 
 
 resource "aws_s3_bucket" "terraform_state" {
@@ -168,6 +170,7 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/src/vsnandy_lambda.zip"
 }
 
+/*
 // Lambda Function URL
 resource "aws_lambda_function_url" "lambda_url" {
   function_name      = aws_lambda_function.lambda_function.arn
@@ -182,6 +185,7 @@ resource "aws_lambda_function_url" "lambda_url" {
     max_age = 86400
   } 
 }
+*/
 
 // Create the lambda function
 resource "aws_lambda_function" "lambda_function" {
@@ -193,6 +197,7 @@ resource "aws_lambda_function" "lambda_function" {
   depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
 }
 
+/*
 // IAM policy document for lambda function url access
 data "aws_iam_policy_document" "lambda_function_url_access_policy_doc" {
   statement {
@@ -211,7 +216,9 @@ resource "aws_iam_policy" "lambda_function_url_access_policy" {
   description = "IAM policy to access vsnandy lambda api function url. Will be attached to the lambda_function_url_access_role."
   policy = data.aws_iam_policy_document.lambda_function_url_access_policy_doc.json
 }
+*/
 
+/*
 // Define an IAM policy for the lambda
 data "aws_iam_policy_document" "vsnandy-admin-policy" { 
   statement {
@@ -245,12 +252,15 @@ resource "aws_iam_role" "vsnandy-admin-role" {
   path = "/service-role/"
   assume_role_policy = data.aws_iam_policy_document.vsnandy-admin-policy.json
 }
+*/
 
-// Attach lambda_logging_policy to the lambda_role
+/*
+// Attach lambda_function_url_policy to the lambda_role
 resource "aws_iam_role_policy_attachment" "attach_lambda_function_url_policy" {
   role = aws_iam_role.vsnandy-admin-role.name
   policy_arn = aws_iam_policy.lambda_function_url_access_policy.arn
 }
+*/
 
 // DynamoDB deployment
 resource "aws_dynamodb_table" "vsnandy_db" {
