@@ -332,7 +332,7 @@ resource "aws_apigatewayv2_route" "default_route" {
   route_key = "$default"
 
   authorization_type = "JWT"
-  authorizer_id = aws_apigatewayv2_authorizer.auth.id
+  authorizer_id = aws_apigatewayv2_authorizer.api_gw_auth.id
 }
 
 # Permission
