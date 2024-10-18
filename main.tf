@@ -8,6 +8,10 @@ variable "lambda_logging_policy_arn" {
   type = string
 }
 
+variable "lambda_function_url_access_policy_arn" {
+  type = string
+}
+
 terraform {
   required_providers {
     aws = {
@@ -65,7 +69,7 @@ import {
 
 import {
   to = aws_iam_policy.lambda_function_url_access_policy
-  id = "vsnandy_lambda_api_function_url_access_policy"
+  id = "${var.lambda_function_url_access_policy_arn}"
 }
 
 
