@@ -99,7 +99,7 @@ import {
 
 import {
   to = aws_apigatewayv2_route.default_route
-  id = "${var.default_route_id}"
+  id = "${var.vsnandy_gw_id}/${var.default_route_id}"
 }
 
 resource "aws_s3_bucket" "terraform_state" {
