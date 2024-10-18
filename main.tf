@@ -313,6 +313,13 @@ resource "aws_apigatewayv2_api" "api" {
   name = "vsnandy-api"
   protocol_type = "HTTP"
   target = aws_lambda_function.lambda_function.arn
+  
+  cors_configuration {
+    allow_origins = ["http://localhost:3000", "https://vsnandy.github.io"]
+    allow_methods = ["*"]
+    allow_headers = ["*"]
+    allow_credentials = true
+  }
 }
 
 # API GW Authorizer 
