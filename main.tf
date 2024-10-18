@@ -85,7 +85,7 @@ import {
 
 import {
   to = aws_cognito_user_pool.pool
-  id = "${var.vsnandy_user_pool_id}"
+  id = "${var.vsnandy_user_pool_client_id}"
 }
 
 import {
