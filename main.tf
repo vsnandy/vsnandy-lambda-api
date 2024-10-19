@@ -316,7 +316,7 @@ resource "aws_apigatewayv2_api" "api" {
   
   cors_configuration {
     allow_origins = ["http://localhost:3000", "https://vsnandy.github.io"]
-    allow_methods = ["GET", "POST", "PATCH", "DELETE"]
+    allow_methods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
     allow_headers = ["Accept", "Content-Type", "Authorization"]
     allow_credentials = true
     max_age = 15
