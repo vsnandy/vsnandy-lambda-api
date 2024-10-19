@@ -38,8 +38,23 @@ def handler(event, context):
     BETS_PATH = "/bets"
     ATHLETES_PATH = "/athletes"
 
+    # OPTIONS preflight check
+    if httpMethod == "OPTIONS":
+        logger.info("IN OPTIONS CHECK!!!")
+        response = {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
+                "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE",
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
+            "body": json.dumps("Preflight Check Complete")
+        }
+
+        return response
+
     # GET /health
-    if httpMethod == "GET" and path == HEALTH_PATH:
+    elif httpMethod == "GET" and path == HEALTH_PATH:
         response = build_response(200, "HEALTHY")
 
     # POST /health
@@ -293,7 +308,8 @@ def build_response(statusCode, body=None):
         "statusCode": statusCode,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "https://vsnandy.github.io"
+            "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PATCH"
         }
     }
 
