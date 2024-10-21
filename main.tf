@@ -99,7 +99,7 @@ import {
 
 import {
   to = aws_apigatewayv2_integration.auth_integration
-  id = "ng7vw8zbfe/ktsfpdf"
+  id = "ng7vw8zbfe/${aws_apigatewayv2_integration.auth_integration.id}"
 }
 
 import {
@@ -342,10 +342,11 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
 // Route definitions
 resource "aws_apigatewayv2_integration" "auth_integration" {
   api_id           = aws_apigatewayv2_api.api.id
-  integration_type = "HTTP_PROXY"
+  integration_type = "AWS_PROXY"
 
-  integration_method = "OPTIONS"
-  integration_uri    = aws_lambda_function.auth_lambda_function.function_name
+  integration_method = "POST"
+  integration_uri    = aws_lambda_function.auth_lambda_function.invoke_arn
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "cors" {
