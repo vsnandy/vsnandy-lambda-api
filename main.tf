@@ -97,12 +97,15 @@ import {
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
-/*
 import {
-  to = aws_apigatewayv2_route.default_route
-  id = "${var.vsnandy_gw_id}/${var.default_route_id}"
+  to = aws_apigatewayv2_integration.auth_integration
+  id = "ng7vw8zbfe/ktsfpdf"
 }
-*/
+
+import {
+  to = aws_apigatewayv2_route.cors
+  id = "ng7vw8zbfe/6mjpxbm"
+}
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
@@ -339,13 +342,14 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
 // Route definitions
 resource "aws_apigatewayv2_integration" "auth_integration" {
   api_id           = aws_apigatewayv2_api.api.id
-  integration_type = "HTTP_PROXY"
+  integration_type = "AWS_PROXY"
 
-  integration_method = "OPTIONS"
-  integration_uri    = aws_lambda_function.auth_lambda_function.invoke_arn
+  integration_method = "POST"
+  integration_uri    = aws_lambda_function.auth_lambda_function.arn
+  payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "example" {
+resource "aws_apigatewayv2_route" "cors" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "OPTIONS /{proxy+}"
 
