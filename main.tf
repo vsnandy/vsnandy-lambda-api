@@ -359,7 +359,7 @@ resource "aws_iam_role" "lambda_authorizer_role" {
   assume_role_policy = data.aws_iam_policy_document.lambda_policy.json
 }
 // Lambda CORS Authorizer
-data "archive_file" "lambda_zip" {
+data "archive_file" "auth_lambda_zip" {
   type = "zip"
   source_dir = "${path.module}/src_auth/"
   output_path = "${path.module}/src_auth/vsnandy_lambda_authorizer.zip"
