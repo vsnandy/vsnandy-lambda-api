@@ -342,7 +342,7 @@ resource "aws_apigatewayv2_integration" "auth_integration" {
   integration_type = "HTTP_PROXY"
 
   integration_method = "OPTIONS"
-  integration_uri    = aws_lambda_function.auth_lambda_function.arn
+  integration_uri    = aws_lambda_function.auth_lambda_function.invoke_arn
 }
 
 resource "aws_apigatewayv2_route" "example" {
