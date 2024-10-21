@@ -318,7 +318,7 @@ resource "aws_apigatewayv2_api" "api" {
     allow_origins = ["http://localhost:3000", "https://vsnandy.github.io"]
     allow_methods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
     allow_headers = ["Accept", "Content-Type", "Authorization"]
-    allow_credentials = true
+    allow_credentials = false
     max_age = 15
   }
 }
@@ -335,6 +335,102 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
     issuer = "https://${aws_cognito_user_pool.pool.endpoint}"
   }
 }
+
+// Route definitions
+resource "aws_apigatewayv2_integration" "auth_integration" {
+  api_id           = aws_apigatewayv2_api.api.id
+  integration_type = "HTTP_PROXY"
+
+  integration_method = "OPTIONS"
+  integration_uri    = aws_lambda_function.auth_lambda_function.arn
+}
+
+resource "aws_apigatewayv2_route" "example" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "OPTIONS /{proxy+}"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth_integration.id}"
+}
+
+// Define an IAM role for the lambda
+// Assign the above policy as the assumed role for the lambda
+resource "aws_iam_role" "lambda_authorizer_role" {
+  name = "vsnandy_lambda_authorizer_role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_policy.json
+}
+// Lambda CORS Authorizer
+data "archive_file" "lambda_zip" {
+  type = "zip"
+  source_dir = "${path.module}/src_auth/"
+  output_path = "${path.module}/src_auth/vsnandy_lambda_authorizer.zip"
+}
+
+// Create the lambda function
+resource "aws_lambda_function" "auth_lambda_function" {
+  filename = "${path.module}/src_auth/vsnandy_lambda_authorizer.zip"
+  function_name = "vsnandy-lambda-authorizer"
+  role = aws_iam_role.lambda_authorizer_role.arn
+  handler = "handler.handler"
+  runtime = "python3.10"
+}
+
+/*
+# API GW Routes
+resource "aws_apigatewayv2_integration" "example" {
+  api_id           = aws_apigatewayv2_api.api.id
+  integration_type = "HTTP_PROXY"
+
+  integration_method = ""
+  integration_uri    = "https://example.com/{proxy}"
+}
+
+resource "aws_apigatewayv2_route" "example" {
+  api_id    = aws_apigatewayv2_api.example.id
+  route_key = "ANY /example/{proxy+}"
+
+  target = "integrations/${aws_apigatewayv2_integration.example.id}"
+}
+
+
+resource "aws_api_gateway_stage" "gw_default_stage" {
+  depends_on = [aws_cloudwatch_log_group.gw_default_log_group]
+  stage_name = "$default"
+}
+
+resource "aws_cloudwatch_log_group" "gw_default_log_group" {
+  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.example.id}/$default"
+  retention_in_days = 7
+}
+*/
+
+/*
+// API Gateway policy definitions
+data "aws_iam_policy_document" "gw_logging_policy_document" {
+  // IAM policy for logging from the api gateway
+  statement {
+    sid = "Logging"
+    effect = "Allow"
+    resources = ["arn:aws:logs:*:*:*"]
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents"
+    ]
+  }
+}
+
+// Create the logging_policy from the lambda_logging_policy
+resource "aws_iam_policy" "gw_logging_policy" {
+  name = "vsnandy_api_gw_logging_policy"
+  description = "API Gateway logging policy to Cloudwatch"
+  policy = data.aws_iam_policy_document.gw_logging_policy_document.json
+  depends_on = [ aws_iam_role.lambda_role ]
+}
+*/
 
 /*
 resource "aws_apigatewayv2_integration" "api_gw_int" {
