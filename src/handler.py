@@ -293,7 +293,11 @@ def getAllPlayers(sport, league, limit):
         print("Response Pages:", data["pageCount"])
 
         body = {
-            "players": data["items"]
+            "players": data["items"],
+            "pageCount": data["pageCount"],
+            "count": data["count"],
+            "pageIndex": data["pageIndex"],
+            "pageSize": data["pageSize"]
         }
 
         return build_response(200, body)
