@@ -97,12 +97,15 @@ import {
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
-/*
 import {
-  to = aws_apigatewayv2_route.default_route
-  id = "${var.vsnandy_gw_id}/${var.default_route_id}"
+  to = aws_apigatewayv2_integration.auth_integration
+  id = "ng7vw8zbfe/ktsfpdf"
 }
-*/
+
+import {
+  to = aws_apigatewayv2_route.cors
+  id = "ng7vw8zbfe/6mjpxbm"
+}
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
@@ -345,7 +348,7 @@ resource "aws_apigatewayv2_integration" "auth_integration" {
   integration_uri    = aws_lambda_function.auth_lambda_function.function_name
 }
 
-resource "aws_apigatewayv2_route" "example" {
+resource "aws_apigatewayv2_route" "cors" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "OPTIONS /{proxy+}"
 
