@@ -98,7 +98,7 @@ def handler(event, context):
     # GET /athletes
     elif httpMethod == "GET" and path == ATHLETES_PATH:
         params = event["queryStringParameters"]
-        response = getAllPlayers(params["sport"], params["league"], params["limit"])
+        response = getAllPlayers(params["sport"], params["league"], params["limit"], params["page"])
 
     else:
         response = build_response(404, "Not Found")
