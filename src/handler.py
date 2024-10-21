@@ -282,9 +282,9 @@ def deleteWeekForBettor(bettor, week):
 
 # Get All Players for Sport
 # GET /athletes
-def getAllPlayers(sport, league, limit):
+def getAllPlayers(sport, league, limit, page=1):
     try:
-        response = http.request("GET", f"{ESPN_API_URL}/{sport}/{league}/athletes?limit={limit}")
+        response = http.request("GET", f"{ESPN_API_URL}/{sport}/{league}/athletes?limit={limit}&page={page}")
         print("Response Code:", response.status)
 
         data = json.loads(response.data)
