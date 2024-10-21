@@ -210,6 +210,7 @@ resource "aws_lambda_function" "lambda_function" {
   handler = "handler.handler"
   runtime = "python3.10"
   depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
 
 // DynamoDB deployment
