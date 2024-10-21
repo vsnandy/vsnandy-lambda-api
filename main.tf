@@ -99,7 +99,7 @@ import {
 
 import {
   to = aws_apigatewayv2_integration.auth_integration
-  id = "ng7vw8zbfe/${aws_apigatewayv2_integration.auth_integration.id}"
+  id = "ng7vw8zbfe/ktsfpdf"
 }
 
 import {
