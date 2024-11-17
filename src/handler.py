@@ -340,7 +340,7 @@ def getTeams(sport, league):
         print("Response Code:", response.status)
         data = json.loads(response.data)
         body = {
-            "teams": data["sports"][0]["leagues"]["teams"]
+            "teams": data["sports"][0]["leagues"][0]["teams"]
         }
         return build_response(200, body)
 
