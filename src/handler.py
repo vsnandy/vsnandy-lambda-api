@@ -92,7 +92,7 @@ def handler(event, context):
     # POST /bettor
     elif httpMethod == "POST" and path == BETTOR_PATH:
         requestBody = json.loads(event["body"])
-        response = addBettor(requestBody[PKEY])
+        response = addBettor(requestBody[PKEY], requestBody["year"])
 
     # DELETE /bettor?Bettor={}&Week={}
     elif httpMethod == "DELETE" and path == BETTOR_PATH:
@@ -252,11 +252,13 @@ def addBetsForWeekByBettor(bettor, week, bets):
 
 # Add a new Bettor to the DB
 # POST /bettor?Bettor={}
-def addBettor(bettor):
+def addBettor(bettor, year):
     try:
         table.put_item(
             Item = {
-                PKEY: bettor.upper()
+                PKEY: bettor.upper(),
+                SKEY: f"{year}#TOTAL",
+                IKEY: []
             }
         )
 
