@@ -152,13 +152,13 @@ def getBets():
 def getBettor(bettor):
     try:
         response = table.query(
-            KeyConditionExpression=Key("Bettor").eq(bettor)
+            KeyConditionExpression=Key("Bettor").eq(bettor.upper())
         )
 
-        if "Item" in response:
-            return build_response(200, response["Item"])
+        if "Items" in response:
+            return build_response(200, response["Items"])
         else:
-            return build_response(404, {"Message": "Bettor: {0}s not found".format(bettor.upper())})
+            return build_response(404, {"Message": "Bettor: {0} not found".format(bettor.upper())})
     except Exception as e:
         logger.exception("Exception in GetBettor!!")
         logger.exception(e)
