@@ -19,7 +19,8 @@ PKEY = "Bettor"
 SKEY = "Week"
 IKEY = "Bets"
 
-ESPN_API_URL = "https://sports.core.api.espn.com/v3/sports"
+ESPN_API_URL = "https://sports.core.api.espn.com"
+ESPN_HOST = "site.api.espn.com"
 
 def handler(event, context):
     # TODO: vsnandy-lambda-api
@@ -36,7 +37,10 @@ def handler(event, context):
     HEALTH_PATH = "/health"
     BETTOR_PATH = "/bettor"
     BETS_PATH = "/bets"
+    ATHLETE_PATH = "/athlete"
     ATHLETES_PATH = "/athletes"
+    TEAMS_PATH = "/teams"
+    EVENTS_PATH = "/events"
 
     # OPTIONS preflight check
     if httpMethod == "OPTIONS":
@@ -99,6 +103,21 @@ def handler(event, context):
     elif httpMethod == "GET" and path == ATHLETES_PATH:
         params = event["queryStringParameters"]
         response = getAllPlayers(params["sport"], params["league"], params["limit"], params["page"])
+
+    # GET /teams
+    elif httpMethod == "GET" and path == TEAMS_PATH:
+        params = event["queryStringParameters"]
+        response = getTeams(params["sport"], params["league"])
+
+    # GET /events
+    elif httpMethod == "GET" and path == EVENTS_PATH:
+        params = event["queryStringParameters"]
+        response = getEvents(params["sport"], params["league"], params["week"])
+
+    # GET /athlete?id={}
+    elif httpMethod == "GET" and path == ATHLETE_PATH:
+        params = event["queryStringParameters"]
+        response = getPlayerById(params["sport"], params["league"], params["id"])
 
     else:
         response = build_response(404, "Not Found")
@@ -284,7 +303,7 @@ def deleteWeekForBettor(bettor, week):
 # GET /athletes
 def getAllPlayers(sport, league, limit, page=1):
     try:
-        response = http.request("GET", f"{ESPN_API_URL}/{sport}/{league}/athletes?limit={limit}&page={page}")
+        response = http.request("GET", f"{ESPN_API_URL}/v3/sports/{sport}/{league}/athletes?limit={limit}&page={page}")
         print("Response Code:", response.status)
 
         data = json.loads(response.data)
@@ -303,6 +322,71 @@ def getAllPlayers(sport, league, limit, page=1):
         return build_response(200, body)
     except Exception as e:
         logger.exception("Exception in Get All Players Method !!")
+        logger.exception(e)
+        return build_response(400, json.dumps("Server error"))
+    
+# Get all teams for sport
+# GET /teams
+def getTeams(sport, league):
+    try:
+        response = http.request(
+            "GET", 
+            f"{ESPN_API_URL}/apis/site/v2/sports/{sport}/{league}/teams",
+            headers={
+                "Host": ESPN_HOST
+            }
+        )
+
+        print("Response Code:", response.status)
+        data = json.loads(response.data)
+        body = {
+            "teams": data["sports"]["leagues"]["teams"]
+        }
+        return build_response(200, body)
+
+    except Exception as e:
+        logger.exception("Exception in Get Teams method !!")
+        logger.exception(e)
+        return build_response(400, json.dumps("Server error"))
+    
+# Get events for sport
+# GET /events
+def getEvents(sport, league, week = ""):
+    try:
+        response = http.request(
+            "GET", 
+            f"{ESPN_API_URL}/apis/site/v2/sports/{sport}/{league}/scoreboard?week={week}",
+            headers={
+                "Host": ESPN_HOST
+            }
+        )
+        print("Response Code:", response.status)
+        body = json.loads(response.data)
+        return build_response(200, body)
+    
+    except Exception as e:
+        logger.exception("Exception in Get Events method !!")
+        logger.exception(e)
+        return build_response(400, json.dumps("Server error"))
+
+# Get player info
+# GET /player/:id
+def getPlayerById(sport, league, id):
+    try:
+        response = http.request(
+            "GET", 
+            f"{ESPN_API_URL}/apis/common/v3/sports/{sport}/{league}/athletes/{id}",
+            headers={
+                "Host": ESPN_HOST
+            }
+        )
+
+        print("Response Code:", response.status)
+        body = json.loads(response.data)
+        return build_response(200, body)
+    
+    except Exception as e:
+        logger.exception("Exception in Get Player by ID method !!")
         logger.exception(e)
         return build_response(400, json.dumps("Server error"))
 
