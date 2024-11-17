@@ -79,20 +79,20 @@ def handler(event, context):
     elif httpMethod == "GET" and path == BETTOR_PATH:
         response = getBettor(event["queryStringParameters"][PKEY])
 
-    # PATCH /bettor?Bettor={}&Week={}&Bets={}
+    # PATCH /bettor
     elif httpMethod == "PATCH" and path == BETTOR_PATH:
         requestBody = json.loads(event["body"])
         response = updateBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
 
-    # POST /bettor/add-bets?Bettor={}&Week={}&Bets={}
+    # POST /bettor/add-bets
     elif httpMethod == "POST" and path == BETTOR_PATH + "/add-bets":
         requestBody = json.loads(event["body"])
         response = addBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
 
-    # POST /bettor?Bettor={}
+    # POST /bettor
     elif httpMethod == "POST" and path == BETTOR_PATH:
         requestBody = json.loads(event["body"])
-        response = addBettor(requestBody[PKEY])
+        response = addBettor(requestBody[PKEY], requestBody["year"])
 
     # DELETE /bettor?Bettor={}&Week={}
     elif httpMethod == "DELETE" and path == BETTOR_PATH:
@@ -252,11 +252,13 @@ def addBetsForWeekByBettor(bettor, week, bets):
 
 # Add a new Bettor to the DB
 # POST /bettor?Bettor={}
-def addBettor(bettor):
+def addBettor(bettor, year):
     try:
         table.put_item(
             Item = {
-                PKEY: bettor.upper()
+                PKEY: bettor.upper(),
+                SKEY: f"{year}#TOTAL",
+                IKEY: []
             }
         )
 
