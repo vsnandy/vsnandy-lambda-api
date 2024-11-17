@@ -256,9 +256,7 @@ def addBettor(bettor):
     try:
         table.put_item(
             Item = {
-                PKEY: bettor.upper(),
-                SKEY: "TOTAL",
-                IKEY: []
+                PKEY: bettor.upper()
             }
         )
 
