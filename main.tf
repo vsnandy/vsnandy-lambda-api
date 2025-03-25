@@ -166,7 +166,7 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
   statement {
     sid = "DynamoDB"
     effect = "Allow"
-    resources = [aws_dynamodb_table.vsnandy_db.arn]
+    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_draft.arn]
     actions = [
       "dynamodb:BatchGetItem",
       "dynamodb:GetItem",
@@ -231,6 +231,42 @@ resource "aws_dynamodb_table" "vsnandy_db" {
   attribute {
     name = "Week"
     type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "wapit_db" {
+  name           = "wapit_draft"
+  billing_mode   = "PROVISIONED"
+  read_capacity = 1
+  write_capacity = 1
+  hash_key       = "LeagueID"
+  range_key      = "PickNumber"
+
+  attribute {
+    name = "LeagueID"
+    type = "S"
+  }
+
+  attribute {
+    name = "PickNumber"
+    type = "N"
+  }
+
+  attribute {
+    name = "TeamID"
+    type = "S"
+  }
+
+  # Global Secondary Index (GSI) to query by TeamID
+  global_secondary_index {
+    name               = "TeamPicksIndex"
+    hash_key           = "TeamID"
+    projection_type    = "ALL"
+  }
+
+  tags = {
+    Name        = "wapit_draft"
+    Environment = "prod"
   }
 }
 
