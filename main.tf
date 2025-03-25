@@ -171,7 +171,7 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
   statement {
     sid = "DynamoDB"
     effect = "Allow"
-    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_draft.arn]
+    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_db.arn]
     actions = [
       "dynamodb:BatchGetItem",
       "dynamodb:GetItem",
