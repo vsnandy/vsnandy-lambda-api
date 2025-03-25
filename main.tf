@@ -209,6 +209,7 @@ resource "aws_lambda_function" "lambda_function" {
   role = aws_iam_role.lambda_role.arn
   handler = "handler.handler"
   runtime = "python3.10"
+  timeout = 30 # Timeout in seconds, default is 3 seconds
   depends_on = [aws_iam_role_policy_attachment.attach_logging_policy_to_lambda_role]
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
