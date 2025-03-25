@@ -231,6 +231,11 @@ resource "aws_dynamodb_table" "vsnandy_db" {
     name = "Week"
     type = "S"
   }
+
+  attribute {
+    name = "Name"
+    type = "S"
+  }
 }
 
 // COGNITO RESOURCES

@@ -4,6 +4,7 @@ import logging
 import boto3
 import urllib3
 from boto3.dynamodb.conditions import Key
+from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -11,9 +12,9 @@ logger.setLevel(logging.INFO)
 
 http = urllib3.PoolManager()
 
-dynamodbTableName = "vsnandy_bets"
+dynamodb_table_name = "vsnandy_bets"
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table(dynamodbTableName)
+table = dynamodb.Table(dynamodb_table_name)
 
 PKEY = "Bettor"
 SKEY = "Week"
@@ -29,9 +30,9 @@ def handler(event, context):
     logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
     logger.info('*** EVENT ***')
 
-    logger.info(event)
+    #logger.info(event)
 
-    httpMethod = event["requestContext"]["http"]["method"]
+    http_method = event["requestContext"]["http"]["method"]
     path = event["requestContext"]["http"]["path"]
 
     HEALTH_PATH = "/health"
@@ -41,93 +42,129 @@ def handler(event, context):
     ATHLETES_PATH = "/athletes"
     TEAMS_PATH = "/teams"
     EVENTS_PATH = "/events"
+    NCAA_PATH = "/ncaa"
 
-    # OPTIONS preflight check
-    if httpMethod == "OPTIONS":
-        logger.info("IN OPTIONS CHECK!!!")
-        response = {
-            "statusCode": 200,
-            "headers": {
-                "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE",
-                "Access-Control-Allow-Headers": "Content-Type"
-            },
-            "body": json.dumps("Preflight Check Complete")
-        }
+    status_code = 200
 
-        return response
+    try:        
+        # OPTIONS preflight check
+        if http_method == "OPTIONS":
+            logger.info("IN OPTIONS CHECK!!!")
+            preflight_response = {
+                "statusCode": 200,
+                "headers": {
+                    "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE",
+                    "Access-Control-Allow-Headers": "Content-Type"
+                },
+                "body": json.dumps("Preflight Check Complete")
+            }
 
-    # GET /health
-    elif httpMethod == "GET" and path == HEALTH_PATH:
-        response = build_response(200, "HEALTHY")
+            return preflight_response
 
-    # POST /health
-    elif httpMethod == "POST" and path == HEALTH_PATH:
-        requestBody = json.loads(event["body"])
-        response = build_response(200, requestBody["key"])
+        # GET /health
+        elif http_method == "GET" and path == HEALTH_PATH:
+            response_body = "HEALTHY"
 
-    # GET /bets
-    elif httpMethod == "GET" and path == BETS_PATH:
-        response = getBets()
+        # POST /health
+        elif http_method == "POST" and path == HEALTH_PATH:
+            request_body = json.loads(event["body"])
+            response_body = request_body["key"]
 
-    # POST /bets?Bettor={}&Week={}&Bets={}
-    elif httpMethod == "POST" and path == BETS_PATH:
-        requestBody = json.loads(event["body"])
-        response = putBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
+        # GET /bets
+        elif http_method == "GET" and path == BETS_PATH:
+            response_body = get_bets()
 
-    # GET /bettor?Bettor={}
-    elif httpMethod == "GET" and path == BETTOR_PATH:
-        response = getBettor(event["queryStringParameters"][PKEY])
+        # POST /bets?Bettor={}&Week={}&Bets={}
+        elif http_method == "POST" and path == BETS_PATH:
+            request_body = json.loads(event["body"])
+            response_body = put_bets_for_week_by_bettor(request_body[PKEY], request_body[SKEY], request_body[IKEY])
 
-    # PATCH /bettor
-    elif httpMethod == "PATCH" and path == BETTOR_PATH:
-        requestBody = json.loads(event["body"])
-        response = updateBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
+        # GET /bettor?Bettor={}
+        elif http_method == "GET" and path == BETTOR_PATH:
+            response_body, status_code = get_bettor(event["queryStringParameters"][PKEY])
 
-    # POST /bettor/add-bets
-    elif httpMethod == "POST" and path == BETTOR_PATH + "/add-bets":
-        requestBody = json.loads(event["body"])
-        response = addBetsForWeekByBettor(requestBody[PKEY], requestBody[SKEY], requestBody[IKEY])
+        # PATCH /bettor
+        elif http_method == "PATCH" and path == BETTOR_PATH:
+            request_body = json.loads(event["body"])
+            response_body = update_bets_for_week_by_bettor(request_body[PKEY], request_body[SKEY], request_body[IKEY])
 
-    # POST /bettor
-    elif httpMethod == "POST" and path == BETTOR_PATH:
-        requestBody = json.loads(event["body"])
-        response = addBettor(requestBody[PKEY], requestBody["year"])
+        # POST /bettor/add-bets
+        elif http_method == "POST" and path == BETTOR_PATH + "/add-bets":
+            request_body = json.loads(event["body"])
+            response_body = add_bets_for_week_by_bettor(request_body[PKEY], request_body[SKEY], request_body[IKEY])
 
-    # DELETE /bettor?Bettor={}&Week={}
-    elif httpMethod == "DELETE" and path == BETTOR_PATH:
-        requestBody = json.loads(event["body"])
-        response = deleteWeekForBettor(requestBody[PKEY], requestBody[SKEY])
+        # POST /bettor
+        elif http_method == "POST" and path == BETTOR_PATH:
+            request_body = json.loads(event["body"])
+            response_body = add_bettor(request_body[PKEY], request_body["year"])
 
-    # GET /athletes
-    elif httpMethod == "GET" and path == ATHLETES_PATH:
-        params = event["queryStringParameters"]
-        response = getAllPlayers(params["sport"], params["league"], params["limit"], params["page"])
+        # DELETE /bettor
+        elif http_method == "DELETE" and path == BETTOR_PATH:
+            request_body = json.loads(event["body"])
+            response_body = delete_week_for_bettor(request_body[PKEY], request_body[SKEY])
 
-    # GET /teams
-    elif httpMethod == "GET" and path == TEAMS_PATH:
-        params = event["queryStringParameters"]
-        response = getTeams(params["sport"], params["league"])
+        # GET /athletes
+        elif http_method == "GET" and path == ATHLETES_PATH:
+            params = event["queryStringParameters"]
+            response_body = get_all_players(params["sport"], params["league"], params["limit"], params["page"])
 
-    # GET /events
-    elif httpMethod == "GET" and path == EVENTS_PATH:
-        params = event["queryStringParameters"]
-        response = getEvents(params["sport"], params["league"], params["week"])
+        # GET /teams
+        elif http_method == "GET" and path == TEAMS_PATH:
+            params = event["queryStringParameters"]
+            response_body = get_teams(params["sport"], params["league"])
 
-    # GET /athlete?id={}
-    elif httpMethod == "GET" and path == ATHLETE_PATH:
-        params = event["queryStringParameters"]
-        response = getPlayerById(params["sport"], params["league"], params["id"])
+        # GET /events
+        elif http_method == "GET" and path == EVENTS_PATH:
+            params = event["queryStringParameters"]
+            response_body = get_events(params["sport"], params["league"], params["week"])
 
-    else:
-        response = build_response(404, "Not Found")
+        # GET /athlete?id={}
+        elif http_method == "GET" and path == ATHLETE_PATH:
+            params = event["queryStringParameters"]
+            response_body = get_player_by_id(params["sport"], params["league"], params["id"])
 
-    return response
+        # GET /ncaa/schools
+        elif http_method == "GET" and path == NCAA_PATH + "/schools":
+            response_body = get_schools()
+
+        # GET /ncaa/schedule?sport&division&year&month
+        elif http_method == "GET" and path == NCAA_PATH + "/schedule":
+            params = event["queryStringParameters"]
+            response_body = get_schedule(params["sport"], params["division"], params["year"], params["month"])
+
+        # GET /ncaa/scoreboard?sport&division&date
+        elif http_method == "GET" and path == NCAA_PATH + "/scoreboard":
+            params = event["queryStringParameters"]
+            response_body = get_scoreboard(params["sport"], params["division"], params["date"])
+
+        # GET /ncaa/game?gameId&page
+        elif http_method == "GET" and path == NCAA_PATH + "/game":
+            params = event["queryStringParameters"]
+            response_body = get_game_details(params["gameId"], params["page"])
+        
+        # GET /ncaa/wapit/players
+        elif http_method == "GET" and path == NCAA_PATH + "/wapit/players":
+            params = event["queryStringParameters"]
+            response_body = get_wapit_players(params["year"])
+
+        # GET /ncaa/wapit/stats
+        elif http_method == "GET" and path == NCAA_PATH + "/wapit/stats":
+            params = event["queryStringParameters"]
+            response_body = get_wapit_stats(params["playerId"], params["playerName"], params["number"], params["school"])
+
+        else:
+            build_response(404, "Not Found")
+    except Exception as e:
+        logger.exception("Exception caught in handler.py!!!")
+        return build_response(500, "Server Error")
+
+    return build_response(status_code, response_body)
 
 
 # Scan table for all bets
 # GET /bets
-def getBets():
+def get_bets():
     try:
         response = table.scan()
         result = response["Items"]
@@ -140,34 +177,34 @@ def getBets():
             "bets": result
         }
 
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in GetBets!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        raise Exception("Server Error")
 
 
 # Get all bets for a given Bettor
 # GET /bettor?Bettor={}
-def getBettor(bettor):
+def get_bettor(bettor):
     try:
         response = table.query(
             KeyConditionExpression=Key("Bettor").eq(bettor.upper())
         )
 
         if "Items" in response:
-            return build_response(200, response["Items"])
+            return response["Items"]
         else:
-            return build_response(404, {"Message": "Bettor: {0} not found".format(bettor.upper())})
+            return {"Message": "Bettor: {0} not found".format(bettor.upper())}, 404
     except Exception as e:
         logger.exception("Exception in GetBettor!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        raise Exception("Server Error")
 
 
 # Put bets for a Bettor for the Week
 # POST /bets?Bettor={}&Week={}&Bets={}
-def putBetsForWeekByBettor(bettor, week, bets):
+def put_bets_for_week_by_bettor(bettor, week, bets):
     try:
         table.put_item(
             Item = {
@@ -186,16 +223,16 @@ def putBetsForWeekByBettor(bettor, week, bets):
                 IKEY: bets
             }
         }
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in PutBetsForWeekByBettor!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
 
 
 # Updates bets for a Bettor for the Week
 # PATCH /bettor?Bettor={}&Week={}&Bets={}
-def updateBetsForWeekByBettor(bettor, week, bets):
+def update_bets_for_week_by_bettor(bettor, week, bets):
     try:
         response = table.update_item(
             Key = {
@@ -214,16 +251,16 @@ def updateBetsForWeekByBettor(bettor, week, bets):
             "Message": "SUCCESS",
             "UpdatedAttributes": response
         }
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in PutBetsForWeekByBettor!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
 
 
 # Add a bet for a week
 # POST /bettor/add-bets?Bettor={}&Week={}&Bets={}
-def addBetsForWeekByBettor(bettor, week, bets):
+def add_bets_for_week_by_bettor(bettor, week, bets):
     try:
         response = table.update_item(
             Key = {
@@ -243,16 +280,16 @@ def addBetsForWeekByBettor(bettor, week, bets):
             "AppendedAttributes": response
         }
 
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in AddBetsForWeekByBettor!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server Error"))
+        return json.dumps("Server Error")
 
 
 # Add a new Bettor to the DB
 # POST /bettor?Bettor={}
-def addBettor(bettor, year):
+def add_bettor(bettor, year):
     try:
         table.put_item(
             Item = {
@@ -268,16 +305,16 @@ def addBettor(bettor, year):
             "Item": bettor.upper()
         }
 
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in AddBettor Method!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
 
 
 # Delete a week for a bettor from the DB
 # DELETE /bettor?Bettor={}&Week={}
-def deleteWeekForBettor(bettor, week):
+def delete_week_for_bettor(bettor, week):
     try:
         response = table.delete_item(
             Key = {
@@ -292,16 +329,16 @@ def deleteWeekForBettor(bettor, week):
             "deletedItem": response
         }
 
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in DeleteBettor Method!!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
 
 
 # Get All Players for Sport
 # GET /athletes
-def getAllPlayers(sport, league, limit, page=1):
+def get_all_players(sport, league, limit, page=1):
     try:
         response = http.request("GET", f"{ESPN_API_URL}/v3/sports/{sport}/{league}/athletes?limit={limit}&page={page}")
         print("Response Code:", response.status)
@@ -319,15 +356,15 @@ def getAllPlayers(sport, league, limit, page=1):
             "pageSize": data["pageSize"]
         }
 
-        return build_response(200, body)
+        return body
     except Exception as e:
         logger.exception("Exception in Get All Players Method !!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
     
 # Get all teams for sport
 # GET /teams
-def getTeams(sport, league):
+def get_teams(sport, league):
     try:
         response = http.request(
             "GET", 
@@ -342,16 +379,16 @@ def getTeams(sport, league):
         body = {
             "teams": data["sports"][0]["leagues"][0]["teams"]
         }
-        return build_response(200, body)
+        return body
 
     except Exception as e:
         logger.exception("Exception in Get Teams method !!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
     
 # Get events for sport
 # GET /events
-def getEvents(sport, league, week = ""):
+def get_events(sport, league, week = ""):
     try:
         response = http.request(
             "GET", 
@@ -362,16 +399,16 @@ def getEvents(sport, league, week = ""):
         )
         print("Response Code:", response.status)
         body = json.loads(response.data)
-        return build_response(200, body)
+        return body
     
     except Exception as e:
         logger.exception("Exception in Get Events method !!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
 
 # Get player info
 # GET /player/:id
-def getPlayerById(sport, league, id):
+def get_player_by_id(sport, league, id):
     try:
         response = http.request(
             "GET", 
@@ -383,17 +420,17 @@ def getPlayerById(sport, league, id):
 
         print("Response Code:", response.status)
         body = json.loads(response.data)
-        return build_response(200, body)
+        return body
     
     except Exception as e:
         logger.exception("Exception in Get Player by ID method !!")
         logger.exception(e)
-        return build_response(400, json.dumps("Server error"))
+        return json.dumps("Server error")
 
 # Build the response to send
-def build_response(statusCode, body=None):
+def build_response(status_code, response_body=None):
     response = {
-        "statusCode": statusCode,
+        "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
@@ -401,6 +438,6 @@ def build_response(statusCode, body=None):
         }
     }
 
-    if body is not None:
-        response["body"] = json.dumps(body)
+    if response_body is not None:
+        response["body"] = json.dumps(response_body)
     return response
