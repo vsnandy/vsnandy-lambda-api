@@ -107,10 +107,12 @@ import {
   id = "ng7vw8zbfe/6mjpxbm"
 }
 
+/*
 import {
   to = aws_dynamodb_table.wapit_db
   id = "wapit_draft"
 }
+*/
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
