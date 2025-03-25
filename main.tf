@@ -269,6 +269,8 @@ resource "aws_dynamodb_table" "wapit_db" {
     name               = "TeamPicksIndex"
     hash_key           = "TeamID"
     projection_type    = "ALL"
+    read_capacity      = 1
+    write_capacity     = 1
   }
 
   tags = {
