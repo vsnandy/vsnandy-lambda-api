@@ -6,7 +6,7 @@ services:
     network_mode: bridge
     build:
       context: .
-      dockerfile: ../lambda/src/Dockerfile
+      dockerfile: src/Dockerfile
     ports:
       - "4566:4566" # Use port 4566 for both DynamoDB and S3
       - "4574:4574" # Lambda

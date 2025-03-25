@@ -3,3 +3,6 @@ Code for vsnandy.github.io backend API. This lambda will route to the vsnandy Dy
 
 ## Architecture Diagram
 ![alt text](diagram.png)
+
+## Local Testing
+Run `sam local start-api`
