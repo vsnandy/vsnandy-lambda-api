@@ -4,7 +4,7 @@ import logging
 import boto3
 import urllib3
 from boto3.dynamodb.conditions import Key
-from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats
+from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats, get_wapit_league
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def handler(event, context):
     logger.info(os.environ['AWS_LAMBDA_LOG_STREAM_NAME'])
     logger.info('*** EVENT ***')
 
-    #logger.info(event)
+    logger.info(event)
 
     http_method = event["requestContext"]["http"]["method"]
     path = event["requestContext"]["http"]["path"]
@@ -152,6 +152,13 @@ def handler(event, context):
         elif http_method == "GET" and path == NCAA_PATH + "/wapit/stats":
             params = event["queryStringParameters"]
             response_body = get_wapit_stats(params["playerId"], params["playerName"], params["number"], params["school"])
+
+        # GET /ncaa/wapit/league/{league_id}/year/{year}
+        elif http_method == "GET" and path.startswith(NCAA_PATH + "/wapit/league"):
+            path_params = event.get("pathParameters", {})
+            league_id = path_params.get("league_id", "unknown")
+            year = path_params.get("year", "unknown")
+            response_body = get_wapit_league(league_id, year)
 
         else:
             build_response(404, "Not Found")

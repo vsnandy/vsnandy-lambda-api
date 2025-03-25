@@ -3,6 +3,8 @@ import json
 import logging
 import urllib3
 import time
+import boto3
+from boto3.dynamodb.conditions import Key
 from datetime import datetime, timedelta
 
 logging.basicConfig()
@@ -10,6 +12,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 http = urllib3.PoolManager()
+
+dynamodb_table_name = "wapit_draft"
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table(dynamodb_table_name)
 
 NCAA_SCHOOLS_URL = "https://www.ncaa.com/json/schools"
 NCAA_API_URL = "https://data.ncaa.com/casablanca"
@@ -215,7 +221,42 @@ def get_wapit_players(year):
         logger.exception(f"{LOGGER_CONTEXT} - Exception in Get Scoreboard method !!")
         logger.exception(e)
         return json.dumps("Server Error")
+    
 
+# GET /ncaa/wapit/league/{league_id}/year/{year}
+# Grab the WAPIT league from the DB
+def get_wapit_league(league_id, year):
+    LOGGER_CONTEXT = f"[ncaa.py / get_wapit_league({league_id}, {year})]"
+    try:
+        start_time = time.time()
+
+        draft = []
+        # Query DB
+        response = table.query(
+            KeyConditionExpression=Key('LeagueID').eq(league_id + year)
+        )
+
+        if "Items" in response:
+            draft = response["Items"]
+        else:
+            return { "Message": f"League {league_id + year} not found" }, 404
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        logger.info(f"{LOGGER_CONTEXT} - Elapsed time: {elapsed_time:.4f} seconds")
+
+        body = {
+            "timeElapsed": elapsed_time,
+            "draft": draft
+        }
+
+        return body
+    
+    except Exception as e:
+        logger.exception(f"{LOGGER_CONTEXT} - Exception in Get WAPIT League method !!")
+        logger.exception(e)
+        return json.dumps("Server Error")
 
 ####################
 # HELPER FUNCTIONS #
