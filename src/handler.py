@@ -4,7 +4,7 @@ import logging
 import boto3
 import urllib3
 from boto3.dynamodb.conditions import Key
-from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_league
+from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_draft
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -166,7 +166,7 @@ def handler(event, context):
             league_id = path_params.get("league_id", "unknown")
             year = path_params.get("year", "unknown")
             request_body = json.loads(event["body"])
-            response_body = post_wapit_league(league_id, year, request_body[IKEY])
+            response_body = post_wapit_draft(league_id, year, request_body[IKEY])
 
         else:
             build_response(404, "Not Found")
