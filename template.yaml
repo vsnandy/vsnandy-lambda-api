@@ -12,6 +12,11 @@ Resources:
           Properties:
             Path: /ncaa/wapit/league/{league_id}/year/{year}
             Method: GET
+        PostWapitLeague:
+          Type: HttpApi
+          Properties:
+            Path: /ncaa/wapit/league/{league_id}/year/{year}
+            Method: POST
       Handler: handler.handler
       Runtime: python3.10
       CodeUri: src/
