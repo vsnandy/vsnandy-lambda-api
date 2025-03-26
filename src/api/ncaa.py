@@ -257,6 +257,50 @@ def get_wapit_league(league_id, year):
         logger.exception(f"{LOGGER_CONTEXT} - Exception in Get WAPIT League method !!")
         logger.exception(e)
         return json.dumps("Server Error")
+    
+
+# POST /ncaa/wapit/league/{league_id}/year/{year}/draft
+def post_wapit_draft(league_id, year, draft_picks):
+    LOGGER_CONTEXT = f"[ncaa.py] / post_wapit_draft({league_id}, {year})"
+    try:
+        start_time = time.time()
+
+        '''
+        Example draft_picks structure
+        draft_picks = [
+            {"LeagueID": "NBA2024", "PickNumber": 1, "TeamID": "TeamA", "PlayerID": "123", "PlayerName": "LeBron James", "Position": "SF"},
+            {"LeagueID": "NBA2024", "PickNumber": 2, "TeamID": "TeamB", "PlayerID": "456", "PlayerName": "Giannis Antetokounmpo", "Position": "PF"},
+            {"LeagueID": "NBA2024", "PickNumber": 3, "TeamID": "TeamC", "PlayerID": "789", "PlayerName": "Luka Dončić", "Position": "PG"},
+            {"LeagueID": "NBA2024", "PickNumber": 4, "TeamID": "TeamD", "PlayerID": "101", "PlayerName": "Nikola Jokić", "Position": "C"},
+            {"LeagueID": "NBA2024", "PickNumber": 5, "TeamID": "TeamE", "PlayerID": "112", "PlayerName": "Kevin Durant", "Position": "SF"},
+        ]
+        '''
+
+        # split upload into chunks of 25
+        counter = 0
+        for i in range(0, len(draft_picks), 25):  # Process in chunks of 25
+            with table.batch_writer() as batch:
+                for pick in draft_picks[i:i+25]:  
+                    pick["Timestamp"] = datetime.now().isoformat()
+                    batch.put_item(Item=pick)
+                    counter += 1
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        body = {
+            "timeElapsed": elapsed_time,
+            "picksSubmitted": counter,
+            "draft_picks": draft_picks,
+        }
+
+        return body
+    
+    except Exception as e:
+        logger.exception(f"{LOGGER_CONTEXT} - Exception in POST WAPIT Draft !!")
+        logger.exception(e)
+        return json.dumps("Server Error")
+
 
 ####################
 # HELPER FUNCTIONS #
