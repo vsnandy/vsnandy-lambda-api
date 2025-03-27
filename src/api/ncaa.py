@@ -248,6 +248,8 @@ def get_wapit_league(league_id, year):
 
         body = {
             "timeElapsed": elapsed_time,
+            "leagueName": league_id,
+            "year": year,
             "draft": draft
         }
 
