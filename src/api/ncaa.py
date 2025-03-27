@@ -80,7 +80,7 @@ def get_game_details(game_id, page):
         data = json.loads(response.data)
 
         body = {
-            "page": data
+            page: data
         }
 
         return body
@@ -91,17 +91,14 @@ def get_game_details(game_id, page):
     
 
 # Get NCAA March Madness WAPIT stats for a player
-def get_wapit_stats(id, player_name, number, school):
-    dt = datetime.now()
-    dt_string = dt.strftime("%m/%d/%Y")
-    LOGGER_CONTEXT = f"[ncaa.py / get_wapit_stats({player_name}, {number}, {school}, {dt})]"
+def get_wapit_stats(id, player_name, number, school, year):
+    LOGGER_CONTEXT = f"[ncaa.py / get_wapit_stats({player_name}, {number}, {school}, {year})]"
     logger.info(f"{LOGGER_CONTEXT} - In Get WAPIT Stats!!!")
     try:
         start_time = time.time()
 
         logger.info(f"{LOGGER_CONTEXT} - Getting all boxscores for ")
 
-        year = int(dt_string.split("/")[-1])
         response = http.request(
             "GET", 
             f"{NCAA_MM_LIVE_URL}?operationName=gamecenter_game_stats_web&variables=%7B%22seasonYear%22:{int(year)-1}%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%220677d7ecf3cf630d58ed4f221c74908fb4494c12e0dacb70c45190d55accdc74%22%7D%7D"
@@ -159,6 +156,7 @@ def get_wapit_stats(id, player_name, number, school):
             "playerName": player_name,
             "number": number,
             "school": school,
+            "year": year,
             "stats": player_stats
         }
 
@@ -213,6 +211,7 @@ def get_wapit_players(year):
 
         body = {
             "timeElapsed": elapsed_time,
+            "year": year,
             "players": players
         }
 
@@ -292,6 +291,8 @@ def post_wapit_draft(league_id, year, draft_picks):
 
         body = {
             "timeElapsed": elapsed_time,
+            "leagueName": league_id,
+            "year": year,
             "picksSubmitted": counter,
             "draft_picks": draft_picks,
         }
