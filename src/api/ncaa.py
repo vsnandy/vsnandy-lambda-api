@@ -17,6 +17,8 @@ dynamodb_table_name = "wapit_draft"
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(dynamodb_table_name)
 
+cognito = boto3.client("cognito-idp")
+
 NCAA_SCHOOLS_URL = "https://www.ncaa.com/json/schools"
 NCAA_API_URL = "https://data.ncaa.com/casablanca"
 NCAA_MM_LIVE_URL = "https://sdataprod.ncaa.com/"
@@ -224,7 +226,7 @@ def get_wapit_players(year):
 
 # GET /ncaa/wapit/league/{league_id}/year/{year}
 # Grab the WAPIT league from the DB
-def get_wapit_league(league_id, year):
+def get_wapit_league(league_id, year, cognito_user_pool_id):
     LOGGER_CONTEXT = f"[ncaa.py / get_wapit_league({league_id}, {year})]"
     try:
         start_time = time.time()
@@ -239,6 +241,10 @@ def get_wapit_league(league_id, year):
             draft = response["Items"]
         else:
             return { "Message": f"League {league_id + year} not found" }, 404
+        
+        # Get the list of users in the Cognito wapit_ group
+        teams = get_users_in_group(cognito_user_pool_id, f"wapit_{league_id}{year}")
+
 
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -249,6 +255,7 @@ def get_wapit_league(league_id, year):
             "timeElapsed": elapsed_time,
             "leagueName": league_id,
             "year": year,
+            "teams": teams,
             "draft": draft
         }
 
@@ -341,3 +348,18 @@ def get_nth_day(year, month, day, n):
     date = date + timedelta(days=(n-1)*7)
 
     return date
+
+# Get users in a cognito user group
+# Will be used to get all the league members/teams
+def get_users_in_group(user_pool_id, group_name):
+    users = []
+    
+    response = cognito.list_users_in_group(
+        UserPoolId=user_pool_id,
+        GroupName=group_name,
+        Limit=60
+    )
+
+    users.extend(response["Users"])
+
+    return users
