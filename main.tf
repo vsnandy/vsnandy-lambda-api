@@ -185,6 +185,16 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
       "dynamodb:DeleteItem"
     ]
   }
+
+  // IAM policy for lambda => cognito
+  statement {
+    sid = "Cognito"
+    effect = "Allow"
+    resources = [aws_cognito_user_pool.pool.arn]
+    actions = [
+      "cognito-idp:ListUsersInGroup"
+    ]
+  }
 }
 
 // Create the logging_policy from the lambda_logging_policy
