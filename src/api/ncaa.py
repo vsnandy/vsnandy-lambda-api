@@ -245,7 +245,6 @@ def get_wapit_league(league_id, year, cognito_user_pool_id):
         # Get the list of users in the Cognito wapit_ group
         teams = get_users_in_group(cognito_user_pool_id, f"wapit_{league_id}{year}")
 
-
         end_time = time.time()
         elapsed_time = end_time - start_time
 
@@ -328,7 +327,7 @@ def build_response(status_code, response_body=None):
     }
 
     if response_body is not None:
-        response["body"] = json.dumps(response_body)
+        response["body"] = json.dumps(response_body, default=str)
     return response
 
 
@@ -352,6 +351,7 @@ def get_nth_day(year, month, day, n):
 # Get users in a cognito user group
 # Will be used to get all the league members/teams
 def get_users_in_group(user_pool_id, group_name):
+    logger.info("Getting cognito users for User Pool ID - " + user_pool_id)
     users = []
     
     response = cognito.list_users_in_group(
@@ -359,6 +359,9 @@ def get_users_in_group(user_pool_id, group_name):
         GroupName=group_name,
         Limit=60
     )
+
+    logger.info("get_users_in_group response: ")
+    logger.info(response)
 
     users.extend(response["Users"])
 
