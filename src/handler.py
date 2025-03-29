@@ -55,7 +55,7 @@ def handler(event, context):
                 "headers": {
                     "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
                     "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE",
-                    "Access-Control-Allow-Headers": "Content-Type"
+                    "Access-Control-Allow-Headers": "Content-Type, User-Pool-Id"
                 },
                 "body": json.dumps("Preflight Check Complete")
             }
