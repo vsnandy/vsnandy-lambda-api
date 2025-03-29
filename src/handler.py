@@ -456,5 +456,5 @@ def build_response(status_code, response_body=None):
     }
 
     if response_body is not None:
-        response["body"] = json.dumps(response_body)
+        response["body"] = json.dumps(response_body, default=str)
     return response
