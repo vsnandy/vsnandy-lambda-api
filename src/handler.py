@@ -156,11 +156,13 @@ def handler(event, context):
         # GET /ncaa/wapit/league/{league_id}/year/{year}
         elif http_method == "GET" and path.startswith(NCAA_PATH + "/wapit/league"):
             path_params = event.get("pathParameters", {})
+            headers = event.get("headers", {})
             league_id = path_params.get("league_id", "unknown")
             year = path_params.get("year", "unknown")
-            response_body = get_wapit_league(league_id, year)
+            user_pool_id = headers.get("User-Pool-Id", "unknown")
+            response_body = get_wapit_league(league_id, year, user_pool_id)
 
-        # POST /bettor/add-bets
+        # POST /ncaa/wapit/league/{league_id}/year/{year}
         elif http_method == "POST" and path == NCAA_PATH + "/wapit/league":
             path_params = event.get("pathParameters", {})
             league_id = path_params.get("league_id", "unknown")
