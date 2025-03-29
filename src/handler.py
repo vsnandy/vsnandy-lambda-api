@@ -55,7 +55,7 @@ def handler(event, context):
                 "headers": {
                     "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
                     "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE",
-                    "Access-Control-Allow-Headers": "Content-Type, User-Pool-Id"
+                    "Access-Control-Allow-Headers": "Content-Type",
                 },
                 "body": json.dumps("Preflight Check Complete")
             }
@@ -156,10 +156,10 @@ def handler(event, context):
         # GET /ncaa/wapit/league/{league_id}/year/{year}
         elif http_method == "GET" and path.startswith(NCAA_PATH + "/wapit/league"):
             path_params = event.get("pathParameters", {})
-            headers = event.get("headers", {})
+            query_params = event.get("queryStringParameters", {})
             league_id = path_params.get("league_id", "unknown")
             year = path_params.get("year", "unknown")
-            user_pool_id = headers.get("User-Pool-Id", "unknown")
+            user_pool_id = query_params.get("user_pool_id", "unknown")
             response_body = get_wapit_league(league_id, year, user_pool_id)
 
         # POST /ncaa/wapit/league/{league_id}/year/{year}
