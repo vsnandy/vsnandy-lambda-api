@@ -163,12 +163,12 @@ def handler(event, context):
             response_body = get_wapit_league(league_id, year, user_pool_id)
 
         # POST /ncaa/wapit/league/{league_id}/year/{year}
-        elif http_method == "POST" and path == NCAA_PATH + "/wapit/league":
+        elif http_method == "POST" and path.startswith(NCAA_PATH + "/wapit/league"):
+            request_body = json.loads(event["body"])
             path_params = event.get("pathParameters", {})
             league_id = path_params.get("league_id", "unknown")
             year = path_params.get("year", "unknown")
-            request_body = json.loads(event["body"])
-            response_body = post_wapit_draft(league_id, year, request_body[IKEY])
+            response_body = post_wapit_draft(league_id, year, request_body)
 
         else:
             build_response(404, "Not Found")
