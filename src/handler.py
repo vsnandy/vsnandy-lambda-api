@@ -151,7 +151,7 @@ def handler(event, context):
         # GET /ncaa/wapit/stats
         elif http_method == "GET" and path == NCAA_PATH + "/wapit/stats":
             params = event["queryStringParameters"]
-            response_body = get_wapit_stats(params["playerId"], params["playerName"], params["number"], params["school"])
+            response_body = get_wapit_stats(params["playerId"], params["playerName"], params["number"], params["school"], params["year"])
 
         # GET /ncaa/wapit/league/{league_id}/year/{year}
         elif http_method == "GET" and path.startswith(NCAA_PATH + "/wapit/league"):
