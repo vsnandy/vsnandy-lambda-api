@@ -111,13 +111,15 @@ def get_wapit_stats(id, player_name, number, school, year):
 
         # Get all March Madness games
         game_stats = json.loads(response.data)["data"]["mmlContests"]
+        #logger.info(f"{LOGGER_CONTEXT} - Game Stats:")
+        #logger.info(game_stats)
 
         #logger.info(f"{LOGGER_CONTEXT} - Response Data:")
         #logger.info(game_stats)
 
         # Filter only completed games
         # Filter games for school of given player
-        filtered_games = [game for game in game_stats if game["gameState"] == "F"]
+        filtered_games = [game for game in game_stats if (game["gameState"] != "P" and game["round"]["roundNumber"] > 1)]
         player_games = [game for game in filtered_games if game["teams"][0]["nameFull"] == school or game["teams"][1]["nameFull"] == school]
         
         # Loop through games and compile stats for given player
@@ -158,6 +160,92 @@ def get_wapit_stats(id, player_name, number, school, year):
             "playerName": player_name,
             "number": number,
             "school": school,
+            "year": year,
+            "stats": player_stats
+        }
+
+        return body
+    except Exception as e:
+        logger.exception("Exception in Get Scoreboard method !!")
+        logger.exception(e)
+        return json.dumps("Server Error")
+    
+
+# Get NCAA March Madness WAPIT stats for an entire league
+def get_all_wapit_stats(year):
+    LOGGER_CONTEXT = f"[ncaa.py / get_all_wapit_stats({year})]"
+    logger.info(f"{LOGGER_CONTEXT} - In Get All WAPIT Stats!!!")
+    try:
+        start_time = time.time()
+
+        logger.info(f"{LOGGER_CONTEXT} - Getting all boxscores for ")
+
+        game_response = http.request(
+            "GET", 
+            f"{NCAA_MM_LIVE_URL}?operationName=gamecenter_game_stats_web&variables=%7B%22seasonYear%22:{int(year)-1}%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%220677d7ecf3cf630d58ed4f221c74908fb4494c12e0dacb70c45190d55accdc74%22%7D%7D"
+        )
+
+        logger.info(f"{LOGGER_CONTEXT} - Response Status:")
+        logger.info(game_response.status)
+
+        # Get all March Madness games
+        game_stats = json.loads(game_response.data)["data"]["mmlContests"]
+
+        # Filter out any pending games and first four games
+        filtered_games = [game for game in game_stats if (game["gameState"] != "P" and game["round"]["roundNumber"] > 1)]
+
+        # Loop through games and compile stats for all wapit players
+        player_stats = {}
+        for game in filtered_games:
+            # Only keep the below fields from games list
+            keys_to_keep = {"bracketId", "contestId", "startDate", "broadcaster", 
+                            "condensedVideo", "location", "region", "round", "teams"}
+            filtered_game = {k: v for k, v in game.items() if k in keys_to_keep}
+
+            # Only keep the player stats for the given player
+            print("GAME:", game["bracketId"], game["teams"][0]["nameShort"], game["teams"][1]["nameShort"])
+            for team in game["teams"]:
+                for player in team["roster"]:
+                    # If ID doesn't exist in player_stats, create it and assign the game to an empty list
+                    # stats will be list of dicts
+                    #print("PLAYER: ", player["id"], player["firstName"] + " " + player["lastName"])
+                    #print("Team:", team)
+                    #print("Team Boxscore:", game["boxscore"]["teamBoxscore"])
+
+                    player_team_boxscore = next((t for t in game["boxscore"]["teamBoxscore"] if t["ncaaOrgId"] == team["ncaaOrgId"]), None)
+                    player_boxscore = next((p for p in player_team_boxscore["playerStats"] if (p["fname"] + " " + p["lname"]) == (player["firstName"] + " " + player["lastName"])), None)    
+                    
+                    if (not player_boxscore):
+                        #print("SKIPPING ", player["id"], player["firstName"] + " " + player["lastName"])
+                        continue
+
+                    if player["id"] not in player_stats:
+                        # Initialize player in player_stats
+                        player_stats[player["id"]] = {
+                            **player,
+                            "boxscores": [{
+                                "bracketId": game["bracketId"],
+                                "contestId": game["contestId"],
+                                **player_boxscore,
+                            }]
+                        }
+                    # Player already exists in the stats dictionary, so append to it
+                    else:
+                        player_stats[player["id"]]["boxscores"].append({
+                            "bracketId": game["bracketId"],
+                            "contestId": game["contestId"],
+                            **player_boxscore
+                        })
+
+        logger.info(f"{LOGGER_CONTEXT} - Collected MML stats for {len(list(player_stats.keys()))} players !!!")
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        logger.info(f"{LOGGER_CONTEXT} - Elapsed time: {elapsed_time:.4f} seconds")
+
+        body = {
+            "timeElapsed": elapsed_time,
             "year": year,
             "stats": player_stats
         }

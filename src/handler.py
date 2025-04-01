@@ -4,7 +4,7 @@ import logging
 import boto3
 import urllib3
 from boto3.dynamodb.conditions import Key
-from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_draft
+from api.ncaa import get_schools, get_schedule, get_scoreboard, get_game_details, get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_draft, get_all_wapit_stats
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -149,9 +149,14 @@ def handler(event, context):
             response_body = get_wapit_players(params["year"])
 
         # GET /ncaa/wapit/stats
-        elif http_method == "GET" and path == NCAA_PATH + "/wapit/stats":
+        elif http_method == "GET" and path == NCAA_PATH + "/wapit/stats/player":
             params = event["queryStringParameters"]
             response_body = get_wapit_stats(params["playerId"], params["playerName"], params["number"], params["school"], params["year"])
+
+        # GET /ncaa/wapit/league/:league_id/stats
+        elif http_method == "GET" and path.startswith(NCAA_PATH + "/wapit/stats/league"):
+            params = event["queryStringParameters"]
+            response_body = get_all_wapit_stats(params["year"])
 
         # GET /ncaa/wapit/league/{league_id}/year/{year}
         elif http_method == "GET" and path.startswith(NCAA_PATH + "/wapit/league"):
