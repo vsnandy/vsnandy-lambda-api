@@ -6,6 +6,7 @@ import time
 import boto3
 from boto3.dynamodb.conditions import Key
 from datetime import datetime, timedelta
+from itertools import groupby
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -331,7 +332,10 @@ def get_wapit_league(league_id, year, cognito_user_pool_id):
             return { "Message": f"League {league_id + year} not found" }, 404
         
         # Get the list of users in the Cognito wapit_ group
-        teams = get_users_in_group(cognito_user_pool_id, f"wapit_{league_id}{year}")
+        users = get_users_in_group(cognito_user_pool_id, f"wapit_{league_id}{year}")
+
+        # Order the draft picks into teams format
+        teams = {} if len(draft) == 0 else populate_teams_in_league(draft)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -342,6 +346,7 @@ def get_wapit_league(league_id, year, cognito_user_pool_id):
             "timeElapsed": elapsed_time,
             "leagueName": league_id,
             "year": year,
+            "users": users,
             "teams": teams,
             "draft": draft
         }
@@ -454,3 +459,27 @@ def get_users_in_group(user_pool_id, group_name):
     users.extend(response["Users"])
 
     return users
+
+
+# Given a draft, populate the list of teams
+def populate_teams_in_league(draft):
+    logger.info("Populating teams for League --- " + draft[0]["LeagueID"])
+
+    '''
+    Example draft_picks structure
+        draft_picks = [
+            {"LeagueID": "NBA2024", "PickNumber": 1, "TeamID": "TeamA", "PlayerID": "123", "PlayerName": "LeBron James", "Position": "SF"},
+            {"LeagueID": "NBA2024", "PickNumber": 2, "TeamID": "TeamB", "PlayerID": "456", "PlayerName": "Giannis Antetokounmpo", "Position": "PF"},
+            {"LeagueID": "NBA2024", "PickNumber": 3, "TeamID": "TeamC", "PlayerID": "789", "PlayerName": "Luka Dončić", "Position": "PG"},
+            {"LeagueID": "NBA2024", "PickNumber": 4, "TeamID": "TeamD", "PlayerID": "101", "PlayerName": "Nikola Jokić", "Position": "C"},
+            {"LeagueID": "NBA2024", "PickNumber": 5, "TeamID": "TeamE", "PlayerID": "112", "PlayerName": "Kevin Durant", "Position": "SF"},
+        ]
+    '''
+    
+    # Sort first
+    picks_sorted = sorted(draft, key=lambda x: x["TeamID"])
+
+    # Group by team
+    teams = { key: list(group) for key, group in groupby(picks_sorted, key=lambda x: x["TeamID"]) }
+
+    return teams
