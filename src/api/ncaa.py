@@ -224,10 +224,21 @@ def get_all_wapit_stats(year):
                         # Initialize player in player_stats
                         player_stats[player["id"]] = {
                             **player,
+                            "schoolColor": team["color"],
+                            "seed": team["seed"],
+                            "schoolNameFull": team["nameFull"],
+                            "schoolNameShort": team["nameShort"],
+                            "schoolName6Char": team["name6Char"],
+                            "schoolSeoName": team["seoname"],
+                            "schoolNickname": team["nickname"],
                             "boxscores": [{
                                 "bracketId": game["bracketId"],
                                 "contestId": game["contestId"],
-                                **player_boxscore,
+                                "startDate": game["startDate"],
+                                "gameState": game["gameState"],
+                                "isWinner": team["isWinner"],
+                                "score": team["score"],
+                                **player_boxscore
                             }]
                         }
                     # Player already exists in the stats dictionary, so append to it
@@ -235,6 +246,10 @@ def get_all_wapit_stats(year):
                         player_stats[player["id"]]["boxscores"].append({
                             "bracketId": game["bracketId"],
                             "contestId": game["contestId"],
+                            "startDate": game["startDate"],
+                            "gameState": game["gameState"],
+                            "isWinner": team["isWinner"],
+                            "score": team["score"],
                             **player_boxscore
                         })
 
