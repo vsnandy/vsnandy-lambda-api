@@ -375,7 +375,7 @@ resource "aws_apigatewayv2_api" "api" {
   target = aws_lambda_function.lambda_function.arn
   
   cors_configuration {
-    allow_origins = ["http://localhost:3000", "https://vsnandy.github.io"]
+    allow_origins = ["http://localhost:3000", "http://localhost:9000", "https://vsnandy.github.io"]
     allow_methods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
     allow_headers = ["Accept", "Content-Type", "Authorization"]
     allow_credentials = false
