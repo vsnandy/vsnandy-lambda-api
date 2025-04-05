@@ -88,7 +88,7 @@ import {
 }
 
 import {
-  to = aws_cognito_user_pool.pool
+  to = aws_cognito_user_pool.pool_v2
   id = "${var.vsnandy_user_pool_id}"
 }
 
@@ -353,9 +353,131 @@ resource "aws_cognito_user_pool" "pool" {
   }
 }
 
+# aws_cognito_user_pool.pool_v2:
+resource "aws_cognito_user_pool" "pool_v2" {
+    alias_attributes           = [
+        "email",
+        "phone_number",
+    ]
+    auto_verified_attributes   = [
+        "email",
+    ]
+    custom_domain              = null
+    deletion_protection        = "ACTIVE"
+    email_verification_message = null
+    email_verification_subject = null
+    mfa_configuration          = "OFF"
+    name                       = "vsnandy-user-pool-v2"
+    sms_authentication_message = null
+    sms_verification_message   = null
+    tags                       = {}
+    tags_all                   = {}
+
+    account_recovery_setting {
+        recovery_mechanism {
+            name     = "verified_email"
+            priority = 1
+        }
+        recovery_mechanism {
+            name     = "verified_phone_number"
+            priority = 2
+        }
+    }
+
+    admin_create_user_config {
+        allow_admin_create_user_only = false
+    }
+
+    email_configuration {
+        configuration_set      = null
+        email_sending_account  = "COGNITO_DEFAULT"
+        from_email_address     = null
+        reply_to_email_address = null
+        source_arn             = null
+    }
+
+    password_policy {
+        minimum_length                   = 8
+        password_history_size            = 0
+        require_lowercase                = true
+        require_numbers                  = true
+        require_symbols                  = true
+        require_uppercase                = true
+        temporary_password_validity_days = 7
+    }
+
+    schema {
+        attribute_data_type      = "String"
+        developer_only_attribute = false
+        mutable                  = true
+        name                     = "email"
+        required                 = true
+
+        string_attribute_constraints {
+            max_length = "2048"
+            min_length = "0"
+        }
+    }
+    schema {
+        attribute_data_type      = "String"
+        developer_only_attribute = false
+        mutable                  = true
+        name                     = "name"
+        required                 = true
+
+        string_attribute_constraints {
+            max_length = "2048"
+            min_length = "0"
+        }
+    }
+    schema {
+        attribute_data_type      = "String"
+        developer_only_attribute = false
+        mutable                  = true
+        name                     = "nickname"
+        required                 = true
+
+        string_attribute_constraints {
+            max_length = "2048"
+            min_length = "0"
+        }
+    }
+    schema {
+        attribute_data_type      = "String"
+        developer_only_attribute = false
+        mutable                  = true
+        name                     = "phone_number"
+        required                 = true
+
+        string_attribute_constraints {
+            max_length = "2048"
+            min_length = "0"
+        }
+    }
+
+    sms_configuration {
+        external_id    = "eb0dba63-66ec-4538-a911-fbad1ba321f6"
+        sns_caller_arn = "arn:aws:iam::918470975264:role/service-role/CognitoIdpSNSServiceRole"
+        sns_region     = "us-east-1"
+    }
+
+    username_configuration {
+        case_sensitive = false
+    }
+
+    verification_message_template {
+        default_email_option  = "CONFIRM_WITH_CODE"
+        email_message         = null
+        email_message_by_link = null
+        email_subject         = null
+        email_subject_by_link = null
+        sms_message           = null
+    }
+}
+
 resource "aws_cognito_user_pool_client" "client" {
-  name = "website"
-  user_pool_id = aws_cognito_user_pool.pool.id
+  name = "vsnandy.github.io"
+  user_pool_id = aws_cognito_user_pool.pool_v2.id
   explicit_auth_flows = [
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"
@@ -392,7 +514,7 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
 
   jwt_configuration {
     audience = [aws_cognito_user_pool_client.client.id]
-    issuer = "https://${aws_cognito_user_pool.pool.endpoint}"
+    issuer = "https://${aws_cognito_user_pool.pool_v2.endpoint}"
   }
 }
 
