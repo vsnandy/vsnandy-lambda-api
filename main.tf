@@ -77,10 +77,12 @@ import {
   id = "vsnandy-lambda-api"
 }
 
+/*
 import {
   to = aws_apigatewayv2_api.api
   id = "${var.vsnandy_gw_id}"
 }
+*/
 
 import {
   to = aws_lambda_permission.apigw
