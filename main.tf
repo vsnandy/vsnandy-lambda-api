@@ -359,27 +359,19 @@ resource "aws_cognito_user_pool" "pool_v2" {
         "email",
         "phone_number",
     ]
-    arn                        = "arn:aws:cognito-idp:us-east-1:918470975264:userpool/us-east-1_UrCINe3iH"
     auto_verified_attributes   = [
         "email",
     ]
-    creation_date              = "2025-04-05T02:36:29Z"
     custom_domain              = null
     deletion_protection        = "ACTIVE"
-    domain                     = "us-east-1urcine3ih"
     email_verification_message = null
     email_verification_subject = null
-    endpoint                   = "cognito-idp.us-east-1.amazonaws.com/us-east-1_UrCINe3iH"
-    estimated_number_of_users  = 1
-    id                         = "us-east-1_UrCINe3iH"
-    last_modified_date         = "2025-04-05T04:15:57Z"
     mfa_configuration          = "OFF"
     name                       = "vsnandy-user-pool-v2"
     sms_authentication_message = null
     sms_verification_message   = null
     tags                       = {}
     tags_all                   = {}
-    username_attributes        = []
 
     account_recovery_setting {
         recovery_mechanism {
