@@ -84,10 +84,12 @@ import {
 }
 */
 
+/*
 import {
   to = aws_lambda_permission.apigw
   id = "vsnandy-lambda-api/terraform-20241018154650326500000001"
 }
+*/
 
 import {
   to = aws_cognito_user_pool.pool_v2
