@@ -120,10 +120,12 @@ import {
   id = "vsnandy_lambda_authorizer_role"
 }
 
+/*
 import {
   to = aws_apigatewayv2_integration.lambda
   id = "${var.vsnandy_gw_id}/${var.default_route_id}"
 }
+*/
 
 /*
 import {
