@@ -62,6 +62,11 @@ import {
   id = "vsnandy_bets"
 }
 
+import { 
+  to = aws_dynamodb_table.wapit_db
+  id = "wapit_draft"
+}
+
 import {
   to = aws_s3_bucket.terraform_state
   id = "vsnandy-tfstate"
