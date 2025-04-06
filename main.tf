@@ -106,6 +106,7 @@ import {
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
+/*
 import {
   to = aws_apigatewayv2_integration.auth_integration
   id = "ng7vw8zbfe/ktsfpdf"
@@ -115,6 +116,7 @@ import {
   to = aws_apigatewayv2_route.cors
   id = "ng7vw8zbfe/6mjpxbm"
 }
+*/
 
 /*
 import {
