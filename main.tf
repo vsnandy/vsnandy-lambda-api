@@ -82,12 +82,15 @@ import {
   id = "vsnandy-lambda-api"
 }
 
-/*
+import {
+  to = aws_lambda_function.auth_lambda_function
+  id = "vsnandy-lambda-authorizer"
+}
+
 import {
   to = aws_apigatewayv2_api.api
   id = "${var.vsnandy_gw_id}"
 }
-*/
 
 /*
 import {
@@ -106,22 +109,20 @@ import {
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
+import {
+  to = aws_iam_role.lambda_authorizer_role
+  id = "vsnandy_lambda_authorizer_role"
+}
+
 /*
 import {
   to = aws_apigatewayv2_integration.auth_integration
-  id = "ng7vw8zbfe/ktsfpdf"
+  id = "${var.vsnandy_gw_id}/${var.default_route_id}"
 }
 
 import {
   to = aws_apigatewayv2_route.cors
-  id = "ng7vw8zbfe/6mjpxbm"
-}
-*/
-
-/*
-import {
-  to = aws_dynamodb_table.wapit_db
-  id = "wapit_draft"
+  id = "${var.vsnandy_gw_id}/6mjpxbm"
 }
 */
 
