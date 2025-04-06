@@ -194,7 +194,7 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
   statement {
     sid = "Cognito"
     effect = "Allow"
-    resources = [aws_cognito_user_pool.pool.arn]
+    resources = [aws_cognito_user_pool.pool_v2.arn]
     actions = [
       "cognito-idp:ListUsersInGroup"
     ]
