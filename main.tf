@@ -24,6 +24,10 @@ variable "default_route_id" {
   type = string
 }
 
+variable "options_route_id" {
+  type = string
+}
+
 terraform {
   required_providers {
     aws = {
@@ -114,17 +118,15 @@ import {
   id = "vsnandy_lambda_authorizer_role"
 }
 
-/*
 import {
-  to = aws_apigatewayv2_integration.auth_integration
+  to = aws_apigatewayv2_integration.lambda
   id = "${var.vsnandy_gw_id}/${var.default_route_id}"
 }
 
 import {
   to = aws_apigatewayv2_route.cors
-  id = "${var.vsnandy_gw_id}/6mjpxbm"
+  id = "${var.vsnandy_gw_id}/${var.options_route_id}"
 }
-*/
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
@@ -517,6 +519,12 @@ resource "aws_apigatewayv2_api" "api" {
   }
 }
 
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # API GW Authorizer 
 resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
   name = "vsnandy_api_gw_cognito_authorizer"
@@ -530,22 +538,34 @@ resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
   }
 }
 
+
 // Route definitions
-resource "aws_apigatewayv2_integration" "auth_integration" {
+resource "aws_apigatewayv2_integration" "lambda" {
   api_id           = aws_apigatewayv2_api.api.id
   integration_type = "AWS_PROXY"
 
   integration_method = "POST"
-  integration_uri    = aws_lambda_function.auth_lambda_function.arn
+  integration_uri    = aws_lambda_function.lambda_function.arn
   payload_format_version = "2.0"
 }
 
+/*
+resource "aws_apigatewayv2_route" "cors" {
+  api_id = aws_apigatewayv2_api.api.id
+  route_key = "$default"
+  target = "integrations/${aws_apigatewayv2_integration.auth_integration.id}"
+}
+*/
+
+
+/*
 resource "aws_apigatewayv2_route" "cors" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "OPTIONS /{proxy+}"
 
   target = "integrations/${aws_apigatewayv2_integration.auth_integration.id}"
 }
+*/
 
 // Define an IAM role for the lambda
 // Assign the above policy as the assumed role for the lambda
