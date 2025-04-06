@@ -24,9 +24,11 @@ variable "default_route_id" {
   type = string
 }
 
+/*
 variable "options_route_id" {
   type = string
 }
+*/
 
 terraform {
   required_providers {
