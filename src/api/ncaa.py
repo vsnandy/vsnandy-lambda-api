@@ -430,7 +430,8 @@ def build_response(status_code, response_body=None):
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PATCH"
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PATCH",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization"
         }
     }
 
