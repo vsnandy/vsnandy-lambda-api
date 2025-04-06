@@ -62,6 +62,11 @@ import {
   id = "vsnandy_bets"
 }
 
+import { 
+  to = aws_dynamodb_table.wapit_db
+  id = "wapit_draft"
+}
+
 import {
   to = aws_s3_bucket.terraform_state
   id = "vsnandy-tfstate"
@@ -77,15 +82,19 @@ import {
   id = "vsnandy-lambda-api"
 }
 
+/*
 import {
   to = aws_apigatewayv2_api.api
   id = "${var.vsnandy_gw_id}"
 }
+*/
 
+/*
 import {
   to = aws_lambda_permission.apigw
   id = "vsnandy-lambda-api/terraform-20241018154650326500000001"
 }
+*/
 
 import {
   to = aws_cognito_user_pool.pool_v2
@@ -97,6 +106,7 @@ import {
   id = "${var.vsnandy_user_pool_id}/${var.vsnandy_user_pool_client_id}"
 }
 
+/*
 import {
   to = aws_apigatewayv2_integration.auth_integration
   id = "ng7vw8zbfe/ktsfpdf"
@@ -106,6 +116,7 @@ import {
   to = aws_apigatewayv2_route.cors
   id = "ng7vw8zbfe/6mjpxbm"
 }
+*/
 
 /*
 import {
@@ -190,7 +201,7 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
   statement {
     sid = "Cognito"
     effect = "Allow"
-    resources = [aws_cognito_user_pool.pool.arn]
+    resources = [aws_cognito_user_pool.pool_v2.arn]
     actions = [
       "cognito-idp:ListUsersInGroup"
     ]
