@@ -130,6 +130,16 @@ import {
   id = "${var.vsnandy_gw_id}/${var.default_route_id}"
 }
 
+import {
+  to = aws_apigatewayv2_route.get_league
+  id = "${var.vsnandy_gw_id}/zugc0vj"
+}
+
+import {
+  to = aws_apigatewayv2_route.post_league
+  id = "${var.vsnandy_gw_id}/ph2m39r"
+}
+
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "vsnandy-tfstate"
 }
@@ -529,13 +539,13 @@ resource "aws_apigatewayv2_route" "default" {
 
 resource "aws_apigatewayv2_route" "get_league" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "GET /ncaa/wapit/league"
+  route_key = "GET /ncaa/wapit/league/{league_id}/year/{year}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "post_league" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "POST /ncaa/wapit/league"
+  route_key = "POST /ncaa/wapit/league/{league_id}/year/{year}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
