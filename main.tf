@@ -83,6 +83,11 @@ import {
 }
 
 import {
+  to = aws_lambda_function.auth_lambda_function
+  id = "vsnandy-lambda-authorizer"
+}
+
+import {
   to = aws_apigatewayv2_api.api
   id = "${var.vsnandy_gw_id}"
 }
