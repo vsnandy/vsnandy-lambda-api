@@ -234,6 +234,7 @@ def get_all_wapit_stats(year):
                             "boxscores": [{
                                 "bracketId": game["bracketId"],
                                 "contestId": game["contestId"],
+                                "roundName": game["round"]["title"],
                                 "startDate": game["startDate"],
                                 "gameState": game["gameState"],
                                 "isWinner": team["isWinner"],
@@ -246,6 +247,7 @@ def get_all_wapit_stats(year):
                         player_stats[player["id"]]["boxscores"].append({
                             "bracketId": game["bracketId"],
                             "contestId": game["contestId"],
+                            "roundName": game["round"]["title"],
                             "startDate": game["startDate"],
                             "gameState": game["gameState"],
                             "isWinner": team["isWinner"],
