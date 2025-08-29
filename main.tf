@@ -505,6 +505,7 @@ resource "aws_cognito_user_pool_client" "client" {
   name = "vsnandy.github.io"
   user_pool_id = aws_cognito_user_pool.pool_v2.id
   explicit_auth_flows = [
+    "ALLOW_USER_AUTH",
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
     "ALLOW_USER_PASSWORD_AUTH"

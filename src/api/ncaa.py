@@ -243,7 +243,7 @@ def get_all_wapit_stats(year):
                             }]
                         }
                     # Player already exists in the stats dictionary, so append to it
-                    else:
+                    else
                         player_stats[player["id"]]["boxscores"].append({
                             "bracketId": game["bracketId"],
                             "contestId": game["contestId"],
