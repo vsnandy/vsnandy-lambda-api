@@ -19,6 +19,7 @@ table = dynamodb.Table(dynamodb_table_name)
 PKEY = "Bettor"
 SKEY = "Week"
 IKEY = "Bets"
+NKEY = "Name"
 
 ESPN_API_URL = "https://sports.core.api.espn.com"
 ESPN_HOST = "site.api.espn.com"
@@ -78,7 +79,7 @@ def handler(event, context):
         # POST /bets?Bettor={}&Week={}&Bets={}
         elif http_method == "POST" and path == BETS_PATH:
             request_body = json.loads(event["body"])
-            response_body = put_bets_for_week_by_bettor(request_body[PKEY], request_body[SKEY], request_body[IKEY])
+            response_body = put_bets_for_week_by_bettor(request_body[PKEY], request_body[NKEY], request_body[SKEY], request_body[IKEY])
 
         # GET /bettor?Bettor={}
         elif http_method == "GET" and path == BETTOR_PATH:
@@ -87,17 +88,17 @@ def handler(event, context):
         # PATCH /bettor
         elif http_method == "PATCH" and path == BETTOR_PATH:
             request_body = json.loads(event["body"])
-            response_body = update_bets_for_week_by_bettor(request_body[PKEY], request_body[SKEY], request_body[IKEY])
+            response_body = update_bets_for_week_by_bettor(request_body[PKEY], request_body[NKEY], request_body[SKEY], request_body[IKEY])
 
         # POST /bettor/add-bets
         elif http_method == "POST" and path == BETTOR_PATH + "/add-bets":
             request_body = json.loads(event["body"])
-            response_body = add_bets_for_week_by_bettor(request_body[PKEY], request_body[SKEY], request_body[IKEY])
+            response_body = add_bets_for_week_by_bettor(request_body[PKEY], request_body[NKEY], request_body[SKEY], request_body[IKEY])
 
         # POST /bettor
         elif http_method == "POST" and path == BETTOR_PATH:
             request_body = json.loads(event["body"])
-            response_body = add_bettor(request_body[PKEY], request_body["year"])
+            response_body = add_bettor(request_body[PKEY], request_body[NKEY], request_body["year"])
 
         # DELETE /bettor
         elif http_method == "DELETE" and path == BETTOR_PATH:
@@ -226,11 +227,12 @@ def get_bettor(bettor):
 
 # Put bets for a Bettor for the Week
 # POST /bets?Bettor={}&Week={}&Bets={}
-def put_bets_for_week_by_bettor(bettor, week, bets):
+def put_bets_for_week_by_bettor(bettor, name, week, bets):
     try:
         table.put_item(
             Item = {
                 PKEY: bettor.upper(),
+                NKEY: name,
                 SKEY: week,
                 IKEY: bets
             }
@@ -241,6 +243,7 @@ def put_bets_for_week_by_bettor(bettor, week, bets):
             "Message": "SUCCESS",
             "Item": {
                 PKEY: bettor.upper(),
+                NKEY: name,
                 SKEY: week,
                 IKEY: bets
             }
@@ -254,11 +257,12 @@ def put_bets_for_week_by_bettor(bettor, week, bets):
 
 # Updates bets for a Bettor for the Week
 # PATCH /bettor?Bettor={}&Week={}&Bets={}
-def update_bets_for_week_by_bettor(bettor, week, bets):
+def update_bets_for_week_by_bettor(bettor, name, week, bets):
     try:
         response = table.update_item(
             Key = {
                 PKEY: bettor.upper(),
+                NKEY: name,
                 SKEY: week
             },
             UpdateExpression = f"set {IKEY} = :value",
@@ -282,11 +286,12 @@ def update_bets_for_week_by_bettor(bettor, week, bets):
 
 # Add a bet for a week
 # POST /bettor/add-bets?Bettor={}&Week={}&Bets={}
-def add_bets_for_week_by_bettor(bettor, week, bets):
+def add_bets_for_week_by_bettor(bettor, name, week, bets):
     try:
         response = table.update_item(
             Key = {
                 PKEY: bettor.upper(),
+                NKEY: name,
                 SKEY: week
             },
             UpdateExpression = f"set {IKEY} = list_append({IKEY}, :vals)",
@@ -311,11 +316,12 @@ def add_bets_for_week_by_bettor(bettor, week, bets):
 
 # Add a new Bettor to the DB
 # POST /bettor?Bettor={}
-def add_bettor(bettor, year):
+def add_bettor(bettor, name, year):
     try:
         table.put_item(
             Item = {
                 PKEY: bettor.upper(),
+                NKEY: name,
                 SKEY: f"{year}#TOTAL",
                 IKEY: []
             }
