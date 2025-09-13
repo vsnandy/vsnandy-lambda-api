@@ -73,10 +73,12 @@ import {
   id = "wapit_draft"
 }
 
+/*
 import {
   to = aws_dynamodb_table.pick_poolr
   id = "pick_poolr_bets"
 }
+*/
 
 import {
   to = aws_s3_bucket.terraform_state
