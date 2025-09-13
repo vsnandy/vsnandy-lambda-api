@@ -506,6 +506,8 @@ def create_bet_record(bettor, week, name, bets):
     try:
         response = pick_poolr_table.put_item(
             Item={
+                "PK": f"BETTOR#{bettor}",
+                "SK": f"WEEK#{week}",
                 "bettor": bettor,
                 "week": week,
                 "name": name,
@@ -525,8 +527,8 @@ def get_bet_record(bettor, week):
     logger.info(f"Getting bet record for {bettor} - {week}...")
     response = pick_poolr_table.get_item(
         Key={
-            "bettor": bettor,
-            "week": week
+            "PK": f"BETTOR#{bettor}",
+            "SK": f"WEEK#{week}"
         }
     )
     return response.get("Item")
@@ -536,7 +538,7 @@ def add_bet(bettor, week, bet):
     logger.info(f"Adding bet for {bettor} - {week}...", bet)
     try:
         response = pick_poolr_table.update_item(
-            Key={"bettor": bettor, "week": week},
+            Key={"PK": f"BETTOR#{bettor}", "SK": f"WEEK#{week}"},
             UpdateExpression="SET bets = list_append(if_not_exists(bets, :empty_list), :new_bet)",
             ExpressionAttributeValues={
                 ":new_bet": [bet],
@@ -554,8 +556,8 @@ def delete_bet_record(bettor, week):
     try:
         response = pick_poolr_table.delete_item(
             Key={
-                "bettor": bettor,
-                "week": week
+                "PK": f"BETTOR#{bettor}",
+                "SK": f"WEEK#{week}"
             }
         )
         return response
