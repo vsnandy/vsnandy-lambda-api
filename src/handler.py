@@ -176,14 +176,40 @@ def handler(event, context):
             year = path_params.get("year", "unknown")
             response_body = post_wapit_draft(league_id, year, request_body)
 
+        elif path.endswith("/pick-poolr/bets/create") and http_method == "POST":
+            body = json.loads(event.get("body") or "{}")
+            bettor = body["bettor"]
+            week = body["week"]
+            name = body["name"]
+            bets = body.get("bets", [])
+            response_body = create_bet_record(bettor, week, name, bets)
+
+        elif path.endswith("/bets/get") and method == "GET":
+            bettor = event["queryStringParameters"]["bettor"]
+            week = event["queryStringParameters"]["week"]
+            response_body = get_bet_record(bettor, week)
+            if not response_body:
+                return build_response(404, {"error": "Record not found"})
+
+        elif path.endswith("/bets/update") and method == "POST":
+            bettor = body["bettor"]
+            week = body["week"]
+            bet = body["bet"]
+            response_body = add_bet(bettor, week, bet)
+
+        elif path.endswith("/bets/delete") and method == "DELETE":
+            bettor = body["bettor"]
+            week = body["week"]
+            response_body = delete_bet_record(bettor, week)
+
         else:
             build_response(404, "Not Found")
+
     except Exception as e:
         logger.exception("Exception caught in handler.py!!!")
         return build_response(500, "Server Error")
 
     return build_response(status_code, response_body)
-
 
 # Scan table for all bets
 # GET /bets
@@ -469,3 +495,62 @@ def build_response(status_code, response_body=None):
     if response_body is not None:
         response["body"] = json.dumps(response_body, default=str)
     return response
+
+
+# CREATE (Put new record)
+def create_bet_record(bettor, week, name, bets):
+    try:
+        response = table.put_item(
+            Item={
+                "bettor": bettor,
+                "week": week,
+                "name": name,
+                "bets": bets,
+            },
+            ConditionExpression="attribute_not_exists(bettor) AND attribute_not_exists(week)" # avoid overwrite
+        )
+        return response
+    except Exception as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise Exception("Record already exists")
+        else:
+            raise
+
+# READ (Get record by bettor + week)
+def get_bet_record(bettor, week):
+    response = table.get_item(
+        Key={
+            "bettor": bettor,
+            "week": week
+        }
+    )
+    return response.get("Item")
+
+# UPDATE (Add a new bet to existing bets list)
+def add_bet(bettor, week, bet):
+    try:
+        response = table.update_item(
+            Key={"bettor": bettor, "week": week},
+            UpdateExpression="SET bets = list_append(if_not_exists(bets, :empty_list), :new_bet)",
+            ExpressionAttributeValues={
+                ":new_bet": [bet],
+                ":empty_list": []
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+        return response
+    except Exception as e:
+        raise
+
+# DELETE (Remove record completely)
+def delete_bet_record(bettor, week):
+    try:
+        response = table.delete_item(
+            Key={
+                "bettor": bettor,
+                "week": week
+            }
+        )
+        return response
+    except Exception as e:
+        raise
