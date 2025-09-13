@@ -194,13 +194,8 @@ def handler(event, context):
             if not response_body:
                 return build_response(404, {"error": "Record not found"})
 
-        elif path.endswith("/pick-poolr/add-bet") and http_method == "POST":
-            bettor = body["bettor"]
-            week = body["week"]
-            bet = body["bet"]
-            response_body = add_bet(bettor, week, bet)
-
         elif path.endswith("/pick-poolr/delete-bet") and http_method == "DELETE":
+            request_body = json.loads(event["body"])
             bettor = body["bettor"]
             week = body["week"]
             response_body = delete_bet_record(bettor, week)
@@ -532,23 +527,6 @@ def get_bet_record(bettor, week):
         }
     )
     return response.get("Item")
-
-# UPDATE (Add a new bet to existing bets list)
-def add_bet(bettor, week, bet):
-    logger.info(f"Adding bet for {bettor} - {week}...", bet)
-    try:
-        response = pick_poolr_table.update_item(
-            Key={"PK": f"BETTOR#{bettor}", "SK": f"WEEK#{week}"},
-            UpdateExpression="SET bets = list_append(if_not_exists(bets, :empty_list), :new_bet)",
-            ExpressionAttributeValues={
-                ":new_bet": [bet],
-                ":empty_list": []
-            },
-            ReturnValues="UPDATED_NEW"
-        )
-        return response
-    except Exception as e:
-        raise
 
 # DELETE (Remove record completely)
 def delete_bet_record(bettor, week):
