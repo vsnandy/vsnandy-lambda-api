@@ -16,7 +16,7 @@ dynamodb_table_name = "vsnandy_bets"
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(dynamodb_table_name)
 
-pick_poolr_table_name = "pick-poolr-bets"
+pick_poolr_table_name = "pick_poolr_bets"
 pick_poolr_table = dynamodb.Table(pick_poolr_table_name)
 
 PKEY = "Bettor"
@@ -502,7 +502,7 @@ def build_response(status_code, response_body=None):
 
 # CREATE (Put new record)
 def create_bet_record(bettor, week, name, bets):
-    logger.info("Creating new bet record...")
+    logger.info(f"Creating new bet record for {bettor} - {week}...")
     try:
         response = pick_poolr_table.put_item(
             Item={
@@ -522,6 +522,7 @@ def create_bet_record(bettor, week, name, bets):
 
 # READ (Get record by bettor + week)
 def get_bet_record(bettor, week):
+    logger.info(f"Getting bet record for {bettor} - {week}...")
     response = pick_poolr_table.get_item(
         Key={
             "bettor": bettor,
@@ -532,6 +533,7 @@ def get_bet_record(bettor, week):
 
 # UPDATE (Add a new bet to existing bets list)
 def add_bet(bettor, week, bet):
+    logger.info(f"Adding bet for {bettor} - {week}...", bet)
     try:
         response = pick_poolr_table.update_item(
             Key={"bettor": bettor, "week": week},
@@ -548,6 +550,7 @@ def add_bet(bettor, week, bet):
 
 # DELETE (Remove record completely)
 def delete_bet_record(bettor, week):
+    logger.info(f"Deleting bet record for {bettor} - {week}...")
     try:
         response = pick_poolr_table.delete_item(
             Key={
