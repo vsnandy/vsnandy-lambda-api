@@ -176,7 +176,7 @@ def handler(event, context):
             year = path_params.get("year", "unknown")
             response_body = post_wapit_draft(league_id, year, request_body)
 
-        elif path.endswith("/pick-poolr/bets/create") and http_method == "POST":
+        elif path.endswith("/pick-poolr/create-bet") and http_method == "POST":
             body = json.loads(event.get("body") or "{}")
             bettor = body["bettor"]
             week = body["week"]
@@ -184,20 +184,20 @@ def handler(event, context):
             bets = body.get("bets", [])
             response_body = create_bet_record(bettor, week, name, bets)
 
-        elif path.endswith("/bets/get") and method == "GET":
+        elif path.endswith("/pick-poolr/get-bet") and http_method == "GET":
             bettor = event["queryStringParameters"]["bettor"]
             week = event["queryStringParameters"]["week"]
             response_body = get_bet_record(bettor, week)
             if not response_body:
                 return build_response(404, {"error": "Record not found"})
 
-        elif path.endswith("/bets/update") and method == "POST":
+        elif path.endswith("/pick-poolr/add-bet") and http_method == "POST":
             bettor = body["bettor"]
             week = body["week"]
             bet = body["bet"]
             response_body = add_bet(bettor, week, bet)
 
-        elif path.endswith("/bets/delete") and method == "DELETE":
+        elif path.endswith("/pick-poolr/delete-bet") and http_method == "DELETE":
             bettor = body["bettor"]
             week = body["week"]
             response_body = delete_bet_record(bettor, week)
