@@ -179,23 +179,27 @@ def handler(event, context):
             year = path_params.get("year", "unknown")
             response_body = post_wapit_draft(league_id, year, request_body)
 
-        elif path.endswith("/pick-poolr/create-bet") and http_method == "POST":
-            body = json.loads(event.get("body") or "{}")
+        elif path.endswith("/pick-poolr/bets") and http_method == "POST":
+            body = json.loads(event.get("body"))
+            if body is None or "bettor" not in body or "week" not in body or "name" not in body:
+                return build_response(400, {"error": "Missing 'bettor', 'week' or 'name' in request body"})
             bettor = body["bettor"]
             week = body["week"]
             name = body["name"]
             bets = body.get("bets", [])
             response_body = create_bet_record(bettor, week, name, bets)
 
-        elif path.endswith("/pick-poolr/get-bet") and http_method == "GET":
+        elif path.endswith("/pick-poolr/bets") and http_method == "GET":
             bettor = event["queryStringParameters"]["bettor"]
             week = event["queryStringParameters"]["week"]
             response_body = get_bet_record(bettor, week)
             if not response_body:
                 return build_response(404, {"error": "Record not found"})
 
-        elif path.endswith("/pick-poolr/delete-bet") and http_method == "DELETE":
-            request_body = json.loads(event["body"])
+        elif path.endswith("/pick-poolr/bets") and http_method == "DELETE":
+            body = json.loads(event["body"])
+            if body is None or "bettor" not in body or "week" not in body:
+                return build_response(400, {"error": "Missing 'bettor' or 'week' in request body"})
             bettor = body["bettor"]
             week = body["week"]
             response_body = delete_bet_record(bettor, week)
@@ -520,13 +524,16 @@ def create_bet_record(bettor, week, name, bets):
 # READ (Get record by bettor + week)
 def get_bet_record(bettor, week):
     logger.info(f"Getting bet record for {bettor} - {week}...")
-    response = pick_poolr_table.get_item(
-        Key={
-            "PK": f"BETTOR#{bettor}",
-            "SK": f"WEEK#{week}"
-        }
-    )
-    return response.get("Item")
+    try:
+        response = pick_poolr_table.get_item(
+            Key={
+                "PK": f"BETTOR#{bettor}",
+                "SK": f"WEEK#{week}"
+            }
+        )
+        return response.get("Item")
+    except Exception as e:
+        raise
 
 # DELETE (Remove record completely)
 def delete_bet_record(bettor, week):
