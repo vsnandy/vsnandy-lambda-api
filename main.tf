@@ -74,6 +74,11 @@ import {
 }
 
 import {
+  to = aws_dynamodb_table.pick_poolr
+  id = "pick_poolr_bets"
+}
+
+import {
   to = aws_s3_bucket.terraform_state
   id = "vsnandy-tfstate"
 }
@@ -199,7 +204,7 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
   statement {
     sid = "DynamoDB"
     effect = "Allow"
-    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_db.arn]
+    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_db.arn, aws_dynamodb_table.pick_poolr.arn]
     actions = [
       "dynamodb:BatchGetItem",
       "dynamodb:GetItem",
@@ -274,6 +279,51 @@ resource "aws_dynamodb_table" "vsnandy_db" {
   attribute {
     name = "Week"
     type = "S"
+  }
+}
+
+// Pick Poolr DynamoDB
+resource "aws_dynamodb_table" "pick_poolr" {
+  name           = "pick_poolr_bets"
+  billing_mode = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "PK"
+  range_key      = "SK"
+
+  attribute {
+    name = "PK"
+    type = "S"
+  }
+
+  attribute {
+    name = "SK"
+    type = "S"
+  }
+
+  # GSI to find all bets for a given game_id
+  attribute {
+    name = "game_id"
+    type = "S"
+  }
+
+  # GSI to query items by status (pending/won/lost)
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "game-index"
+    hash_key           = "game_id"
+    projection_type    = "ALL"
+    # No provisioned throughput required in PAY_PER_REQUEST mode
+  }
+
+  global_secondary_index {
+    name               = "status-index"
+    hash_key           = "status"
+    projection_type    = "ALL"
   }
 }
 

@@ -291,7 +291,6 @@ def add_bets_for_week_by_bettor(bettor, name, week, bets):
         response = table.update_item(
             Key = {
                 PKEY: bettor.upper(),
-                NKEY: name,
                 SKEY: week
             },
             UpdateExpression = f"set {IKEY} = list_append({IKEY}, :vals)",
