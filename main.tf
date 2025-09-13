@@ -319,6 +319,8 @@ resource "aws_dynamodb_table" "pick_poolr" {
     name               = "game-index"
     hash_key           = "game_id"
     projection_type    = "ALL"
+    read_capacity  = 1
+    write_capacity = 1
     # No provisioned throughput required in PAY_PER_REQUEST mode
   }
 
@@ -326,6 +328,8 @@ resource "aws_dynamodb_table" "pick_poolr" {
     name               = "status-index"
     hash_key           = "status"
     projection_type    = "ALL"
+    read_capacity  = 1
+    write_capacity = 1
   }
 }
 
