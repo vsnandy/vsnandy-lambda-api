@@ -16,6 +16,9 @@ dynamodb_table_name = "vsnandy_bets"
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(dynamodb_table_name)
 
+pick_poolr_table_name = "pick-poolr-bets"
+pick_poolr_table = dynamodb.Table(pick_poolr_table_name)
+
 PKEY = "Bettor"
 SKEY = "Week"
 IKEY = "Bets"
@@ -499,8 +502,9 @@ def build_response(status_code, response_body=None):
 
 # CREATE (Put new record)
 def create_bet_record(bettor, week, name, bets):
+    logger.info("Creating new bet record...")
     try:
-        response = table.put_item(
+        response = pick_poolr_table.put_item(
             Item={
                 "bettor": bettor,
                 "week": week,
@@ -518,7 +522,7 @@ def create_bet_record(bettor, week, name, bets):
 
 # READ (Get record by bettor + week)
 def get_bet_record(bettor, week):
-    response = table.get_item(
+    response = pick_poolr_table.get_item(
         Key={
             "bettor": bettor,
             "week": week
@@ -529,7 +533,7 @@ def get_bet_record(bettor, week):
 # UPDATE (Add a new bet to existing bets list)
 def add_bet(bettor, week, bet):
     try:
-        response = table.update_item(
+        response = pick_poolr_table.update_item(
             Key={"bettor": bettor, "week": week},
             UpdateExpression="SET bets = list_append(if_not_exists(bets, :empty_list), :new_bet)",
             ExpressionAttributeValues={
@@ -545,7 +549,7 @@ def add_bet(bettor, week, bet):
 # DELETE (Remove record completely)
 def delete_bet_record(bettor, week):
     try:
-        response = table.delete_item(
+        response = pick_poolr_table.delete_item(
             Key={
                 "bettor": bettor,
                 "week": week
