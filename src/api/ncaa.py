@@ -5,8 +5,9 @@ import urllib3
 import time
 import boto3
 from boto3.dynamodb.conditions import Key
-from datetime import datetime, timedelta
-from itertools import groupby
+from datetime import datetime
+
+from utils.helper import get_users_in_group, populate_teams_in_league
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ NCAA_API_URL = "https://data.ncaa.com/casablanca"
 NCAA_MM_LIVE_URL = "https://sdataprod.ncaa.com/"
 
 # Get NCAA schools
-def get_schools():
+def get_schools(event, logger):
     try:
         response = http.request("GET", NCAA_SCHOOLS_URL)
         print("Response Code:", response.status)
@@ -42,8 +43,13 @@ def get_schools():
         return json.dumps("Server error")
         
 # Get NCAA Game Schedule for a Sport/Division/Year/Month
-def get_schedule(sport, division, year, month):
+def get_schedule(event, logger):
     try:
+        sport = event.get("queryStringParameters", {}).get("Sport", "football")
+        division = event.get("queryStringParameters", {}).get("Division", "fbs")
+        year = event.get("queryStringParameters", {}).get("Year", str(datetime.now().year))
+        month = event.get("queryStringParameters", {}).get("Month", str(datetime.now().month).zfill(2))
+
         response = http.request("GET", f"{NCAA_API_URL}/schedule/{sport}/{division}/{year}/{month}/schedule-all-conf.json")
         print("Response Code:", response.status)
         data = json.loads(response.data)
@@ -59,8 +65,12 @@ def get_schedule(sport, division, year, month):
         return json.dumps("Server error")
     
 # Get NCAA Scoreboard for a Sport/Division/Date
-def get_scoreboard(sport, division, date):
+def get_scoreboard(event, logger):
     try:
+        sport = event.get("queryStringParameters", {}).get("Sport", "football")
+        division = event.get("queryStringParameters", {}).get("Division", "fbs")
+        date = event.get("queryStringParameters", {}).get("Date", datetime.now().strftime("%Y%m%d"))
+
         response = http.request("GET", f"{NCAA_API_URL}/scoreboard/{sport}/{division}/{date}/scoreboard.json")
         print("Response Code:", response.status)
         data = json.loads(response.data)
@@ -76,8 +86,13 @@ def get_scoreboard(sport, division, date):
         return json.dumps("Server Error")
     
 # Get NCAA Game Details for a Game/Page
-def get_game_details(game_id, page):
+def get_game_details(event, logger):
     try:
+        game_id = event.get("queryStringParameters", {}).get("GameID", None)
+        page = event.get("queryStringParameters", {}).get("Page", "summary") # summary, playbyplay, boxscore
+        if game_id is None:
+            return json.dumps("Missing GameID in query string")
+        
         response = http.request("GET", f"{NCAA_API_URL}/game/{game_id}/{page}.json")
         print("Response Code:", response.status)
         data = json.loads(response.data)
@@ -94,10 +109,18 @@ def get_game_details(game_id, page):
     
 
 # Get NCAA March Madness WAPIT stats for a player
-def get_wapit_stats(id, player_name, number, school, year):
+def get_wapit_stats(event, logger):
     LOGGER_CONTEXT = f"[ncaa.py / get_wapit_stats({player_name}, {number}, {school}, {year})]"
     logger.info(f"{LOGGER_CONTEXT} - In Get WAPIT Stats!!!")
     try:
+        id = event.get("queryStringParameters", {}).get("id", None)
+        player_name = event.get("queryStringParameters", {}).get("player_name", None)
+        number = event.get("queryStringParameters", {}).get("number", None)
+        school = event.get("queryStringParameters", {}).get("school", None)
+        year = event.get("queryStringParameters", {}).get("year", str(datetime.now().year))
+        if id is None or player_name is None or number is None or school is None or year is None:
+            return json.dumps("Missing id, player_name, number, school or year in query string")
+        
         start_time = time.time()
 
         logger.info(f"{LOGGER_CONTEXT} - Getting all boxscores for ")
@@ -173,10 +196,14 @@ def get_wapit_stats(id, player_name, number, school, year):
     
 
 # Get NCAA March Madness WAPIT stats for an entire league
-def get_all_wapit_stats(year):
+def get_all_wapit_stats(event, logger):
     LOGGER_CONTEXT = f"[ncaa.py / get_all_wapit_stats({year})]"
     logger.info(f"{LOGGER_CONTEXT} - In Get All WAPIT Stats!!!")
     try:
+        year = event.get("queryStringParameters", {}).get("year", str(datetime.now().year))
+        if year is None:
+            return json.dumps("Missing year in query string")
+        
         start_time = time.time()
 
         logger.info(f"{LOGGER_CONTEXT} - Getting all boxscores for ")
@@ -279,9 +306,13 @@ def get_all_wapit_stats(year):
 # 1. Get schedule and determine Day 1 & 2 of tournament (3rd Thursday of March = Day 1)
 # 2. Get all games on Day 1 & Day 2, then filter those on Tournament games
 # 3. For each game, extract the players
-def get_wapit_players(year):
+def get_wapit_players(event, logger):
     LOGGER_CONTEXT = "[ncaa.py / get_wapit_players()]"
     try:
+        year = event.get("queryStringParameters", {}).get("year", str(datetime.now().year))
+        if year is None:
+            return json.dumps("Missing year in query string")
+        
         start_time = time.time()
         
         #URL --- https://sdataprod.ncaa.com/?operationName=gamecenter_game_stats_web&variables={"seasonYear":2024}&extensions={"persistedQuery":{"version":1,"sha256Hash":"0677d7ecf3cf630d58ed4f221c74908fb4494c12e0dacb70c45190d55accdc74"}}
@@ -332,9 +363,15 @@ def get_wapit_players(year):
 
 # GET /ncaa/wapit/league/{league_id}/year/{year}
 # Grab the WAPIT league from the DB
-def get_wapit_league(league_id, year, cognito_user_pool_id):
+def get_wapit_league(event, logger):
     LOGGER_CONTEXT = f"[ncaa.py / get_wapit_league({league_id}, {year})]"
     try:
+        league_id = event.get("pathParameters", {}).get("league_id", None)
+        year = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        cognito_user_pool_id = os.getenv("COGNITO_USER_POOL_ID", None)
+        if league_id is None or year is None or cognito_user_pool_id is None:
+            return json.dumps("Missing league_id, year or COGNITO_USER_POOL_ID in query string")
+        
         start_time = time.time()
 
         draft = []
@@ -349,10 +386,10 @@ def get_wapit_league(league_id, year, cognito_user_pool_id):
             return { "Message": f"League {league_id + year} not found" }, 404
         
         # Get the list of users in the Cognito wapit_ group
-        users = get_users_in_group(cognito_user_pool_id, f"wapit_{league_id}{year}")
+        users = get_users_in_group(cognito, cognito_user_pool_id, f"wapit_{league_id}{year}", logger)
 
         # Order the draft picks into teams format
-        teams = {} if len(draft) == 0 else populate_teams_in_league(draft)
+        teams = {} if len(draft) == 0 else populate_teams_in_league(draft, logger)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -377,9 +414,17 @@ def get_wapit_league(league_id, year, cognito_user_pool_id):
     
 
 # POST /ncaa/wapit/league/{league_id}/year/{year}/draft
-def post_wapit_draft(league_id, year, draft_picks):
+def post_wapit_draft(event, logger):
     LOGGER_CONTEXT = f"[ncaa.py] / post_wapit_draft({league_id}, {year})"
     try:
+        league_id = event.get("pathParameters", {}).get("league_id", None)
+        year = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        body = json.loads(event.get("body", "{}"))
+        draft_picks = body.get("draft_picks", [])
+
+        if league_id is None or year is None:
+            return json.dumps("Missing league_id or year in query string")
+        
         start_time = time.time()
 
         '''
@@ -419,85 +464,3 @@ def post_wapit_draft(league_id, year, draft_picks):
         logger.exception(f"{LOGGER_CONTEXT} - Exception in POST WAPIT Draft !!")
         logger.exception(e)
         return json.dumps("Server Error")
-
-
-####################
-# HELPER FUNCTIONS #
-####################
-
-# Build the response to send
-def build_response(status_code, response_body=None):
-    response = {
-        "statusCode": status_code,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PATCH",
-            "Access-Control-Allow-Headers": "Content-Type,Authorization"
-        }
-    }
-
-    if response_body is not None:
-        response["body"] = json.dumps(response_body, default=str)
-    return response
-
-
-# Calculate the nth day of week of the month/year
-def get_nth_day(year, month, day, n):
-    # Get first day of month
-    date = datetime(year, month, 1)
-    dow = date.isoweekday()
-    # ISO Weekday is 1 = Monday, 7 = Sunday
-
-    while(dow != day):
-        date = date + timedelta(days=1)
-        dow = date.isoweekday()
-
-    # Found the 1st day in the given month/year
-    # Add (n-1)*7 more days to get the nth day in the given month/year
-    date = date + timedelta(days=(n-1)*7)
-
-    return date
-
-# Get users in a cognito user group
-# Will be used to get all the league members/teams
-def get_users_in_group(user_pool_id, group_name):
-    logger.info("Getting cognito users for User Pool ID - " + user_pool_id)
-    users = []
-    
-    response = cognito.list_users_in_group(
-        UserPoolId=user_pool_id,
-        GroupName=group_name,
-        Limit=60
-    )
-
-    logger.info("get_users_in_group response: ")
-    logger.info(response)
-
-    users.extend(response["Users"])
-
-    return users
-
-
-# Given a draft, populate the list of teams
-def populate_teams_in_league(draft):
-    logger.info("Populating teams for League --- " + draft[0]["LeagueID"])
-
-    '''
-    Example draft_picks structure
-        draft_picks = [
-            {"LeagueID": "NBA2024", "PickNumber": 1, "TeamID": "TeamA", "PlayerID": "123", "PlayerName": "LeBron James", "Position": "SF"},
-            {"LeagueID": "NBA2024", "PickNumber": 2, "TeamID": "TeamB", "PlayerID": "456", "PlayerName": "Giannis Antetokounmpo", "Position": "PF"},
-            {"LeagueID": "NBA2024", "PickNumber": 3, "TeamID": "TeamC", "PlayerID": "789", "PlayerName": "Luka Dončić", "Position": "PG"},
-            {"LeagueID": "NBA2024", "PickNumber": 4, "TeamID": "TeamD", "PlayerID": "101", "PlayerName": "Nikola Jokić", "Position": "C"},
-            {"LeagueID": "NBA2024", "PickNumber": 5, "TeamID": "TeamE", "PlayerID": "112", "PlayerName": "Kevin Durant", "Position": "SF"},
-        ]
-    '''
-    
-    # Sort first
-    picks_sorted = sorted(draft, key=lambda x: x["TeamID"])
-
-    # Group by team
-    teams = { key: list(group) for key, group in groupby(picks_sorted, key=lambda x: x["TeamID"]) }
-
-    return teams
