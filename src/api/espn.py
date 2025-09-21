@@ -164,7 +164,7 @@ def get_cdn_scoreboard(event, logger):
         return json.dumps("Server error")
 
 # Get player info
-# GET espn/athlete?sport=:sport&league=:league&id=:id
+# GET /espn/athlete?sport=:sport&league=:league&id=:id
 def get_athlete(event, logger):
     try:
         sport = event.get("queryStringParameters", {}).get("sport", None)
@@ -188,6 +188,7 @@ def get_athlete(event, logger):
         return json.dumps("Server error")
     
 # Get CDN Schedule
+# GET /espn/cdn/schedule
 def get_cdn_schedule(event, logger):
     try:
         year = event.get("queryStringParameters", {}).get("year", None)
@@ -211,6 +212,7 @@ def get_cdn_schedule(event, logger):
         return json.dumps("Server error")
     
 # Get Site Standings
+# GET /espn/site/standings
 def get_site_standings(event, logger):
     try:
         sport = event.get("queryStringParameters", {}).get("sport", None)
@@ -235,6 +237,7 @@ def get_site_standings(event, logger):
         return json.dumps("Server error")
 
 # Get CDN Standings
+# GET /espn/cdn/standings
 def get_cdn_standings(event, logger):
     try:
         response = http.request(
@@ -251,23 +254,22 @@ def get_cdn_standings(event, logger):
         logger.exception(e)
         return json.dumps("Server error")
     
-
 # Get Conference Standings
+# GET /espn/conference-standings?sport=football&league=nfl&season=2025&season_type=1&id=NFC
 def get_conference_standings(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        season = params.get("season", None)
-        season_type = params.get("season_type", None)
-        id = params.get("id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        season = event.get("queryStringParameters", {}).get("season", None)
+        season_type = event.get("queryStringParameters", {}).get("season_type", None)
+        id = event.get("queryStringParameters", {}).get("id", None)
 
         if sport is None or league is None or season is None or season_type is None or id is None:
             return {"Message": "sport, league, season, season_type, and id parameters are required"}, 400
 
         response = http.request(
             "GET",
-            f"{ESPN_SPORTS_URL}/v2/sports/football/leagues/nfl/seasons/{season}/types/{season_type}/groups/{id}/standings"
+            f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/types/{season_type}/groups/{id}/standings"
         )
 
         logger.info("Response Code:", response.status)
@@ -280,12 +282,12 @@ def get_conference_standings(event, logger):
         return json.dumps("Server error")
     
 # Get Team Roster
+# GET /espn/team/roster?sport=football&league=nfl&id=1
 def get_team_roster(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        id = params.get("id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        id = event.get("queryStringParameters", {}).get("id", None)
 
         if sport is None or league is None or id is None:
             return { "Message": "sport, league, or id is required." }, 400
@@ -306,12 +308,12 @@ def get_team_roster(event, logger):
         return json.dumps("Server error")
 
 # Get Team Schedule
+# GET /espn/team/schedule?sport=football&league=nfl&id=1
 def get_team_schedule(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        id = params.get("id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        id = event.get("queryStringParameters", {}).get("id", None)
 
         if sport is None or league is None or id is None:
             return { "Message": "sport, league, or id is required." }, 400
@@ -332,12 +334,12 @@ def get_team_schedule(event, logger):
         return json.dumps("Server error")
     
 # Get Team Injuries
+# GET /espn/team/injuries?sport=football&league=nfl&id=1
 def get_team_injuries(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        id = params.get("id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        id = event.get("queryStringParameters", {}).get("id", None)
 
         if sport is None or league is None or id is None:
             return { "Message": "sport, league, or id is required." }, 400
@@ -358,13 +360,13 @@ def get_team_injuries(event, logger):
         return json.dumps("Server error")
     
 # Get Team Depth Chart
+# GET /espn/team/depth-chart?sport=football&league=nfl&year=2025&id=1
 def get_team_depth_chart(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        year = params.get("yr", None)
-        id = params.get("id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        year = event.get("queryStringParameters", {}).get("yr", None)
+        id = event.get("queryStringParameters", {}).get("id", None)
 
         if sport is None or league is None or year is None or id is None:
             return { "Message": "sport, league, or id is required." }, 400
@@ -385,12 +387,12 @@ def get_team_depth_chart(event, logger):
         return json.dumps("Server error")
     
 # Get Athlete Overview
+# GET /espn/athlete/overview?sport=football&league=nfl&ath_id=4241389
 def get_athlete_overview(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        ath_id = params.get("ath_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        ath_id = event.get("queryStringParameters", {}).get("ath_id", None)
 
         if sport is None or league is None or ath_id is None:
             return { "Message": "sport, league, or athlete id is required." }, 400
@@ -411,12 +413,12 @@ def get_athlete_overview(event, logger):
         return json.dumps("Server error")
     
 # Get Athlete Gamelog
+# GET /espn/athlete/gamelog?sport=football&league=nfl&ath_id=4241389
 def get_athlete_gamelog(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        ath_id = params.get("ath_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        ath_id = event.get("queryStringParameters", {}).get("ath_id", None)
 
         if sport is None or league is None or ath_id is None:
             return { "Message": "sport, league, or athlete id is required." }, 400
@@ -437,13 +439,13 @@ def get_athlete_gamelog(event, logger):
         return json.dumps("Server error")
     
 # Get Athlete Eventlog
+# GET /espn/athlete/eventlog?sport=football&league=nfl&year=2025&ath_id=4241389
 def get_athlete_eventlog(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        year = params.get("yr", None)
-        ath_id = params.get("ath_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        year = event.get("queryStringParameters", {}).get("yr", None)
+        ath_id = event.get("queryStringParameters", {}).get("ath_id", None)
 
         if sport is None or league is None or year is None or ath_id is None:
             return { "Message": "sport, league, or athlete id is required." }, 400
@@ -464,12 +466,12 @@ def get_athlete_eventlog(event, logger):
         return json.dumps("Server error")
     
 # Get Athlete Splits
+# GET /espn/athlete/splits?sport=football&league=nfl&ath_id=4241389
 def get_athlete_splits(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        ath_id = params.get("ath_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        ath_id = event.get("queryStringParameters", {}).get("ath_id", None)
 
         if sport is None or league is None or ath_id is None:
             return { "Message": "sport, league, or athlete id is required." }, 400
@@ -490,12 +492,12 @@ def get_athlete_splits(event, logger):
         return json.dumps("Server error")
     
 # Get Game Summary
+# GET /espn/game/summary?sport=football&league=nfl&event_id=
 def get_game_summary(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        event_id = params.get("event_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
 
         if sport is None or league is None or event_id is None:
             return { "Message": "sport, league, or event id is required." }, 400
@@ -516,10 +518,10 @@ def get_game_summary(event, logger):
         return json.dumps("Server error")
     
 # Get Game Boxscore
+# GET /espn/game/boxscore?event_id=
 def get_game_boxscore(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        event_id = params.get("event_id", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
 
         if event_id is None:
             return { "Message": "Event ID is required." }, 400
@@ -540,10 +542,10 @@ def get_game_boxscore(event, logger):
         return json.dumps("Server error")
     
 # Get Game Play-by-Play
+# GET /espn/game/playbyplay?event_id=
 def get_game_playbyplay(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        event_id = params.get("event_id", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
 
         if event_id is None:
             return { "Message": "Event ID is required." }, 400
@@ -564,13 +566,13 @@ def get_game_playbyplay(event, logger):
         return json.dumps("Server error")
     
 # Get Game Plays
+# GET /espn/game/plays?sport=football&league=nfl&event_id=&limit=10
 def get_game_plays(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        event_id = params.get("event_id", None)
-        limit = params.get("limit", "")
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
+        limit = event.get("queryStringParameters", {}).get("limit", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
@@ -591,12 +593,12 @@ def get_game_plays(event, logger):
         return json.dumps("Server error")
     
 # Get Game Drives
+# GET /espn/game/drives?sport=football&league=nfl&event_id=
 def get_game_drives(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        event_id = params.get("event_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
@@ -617,14 +619,14 @@ def get_game_drives(event, logger):
         return json.dumps("Server error")
     
 # Get Leaders
+# GET /espn/site/leaders?sport=football&league=nfl&event_id&season=2025&season_type=1
 def get_site_leaders(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        event_id = params.get("event_id", None)
-        season = params.get("season", "")
-        season_type = params.get("seasonType", "")
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
+        season = event.get("queryStringParameters", {}).get("season", "")
+        season_type = event.get("queryStringParameters", {}).get("seasonType", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
@@ -645,14 +647,14 @@ def get_site_leaders(event, logger):
         return json.dumps("Server error")
     
 # Get Leaders (Core API)
+# GET /espn/core/leaders?sport=football&league=nfl&event_id&season=2025&season_type=1
 def get_core_leaders(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        event_id = params.get("event_id", None)
-        season = params.get("season", "")
-        season_type = params.get("seasonType", "")
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        event_id = event.get("queryStringParameters", {}).get("event_id", None)
+        season = event.get("queryStringParameters", {}).get("season", "")
+        season_type = event.get("queryStringParameters", {}).get("seasonType", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
@@ -673,12 +675,12 @@ def get_core_leaders(event, logger):
         return json.dumps("Server error")
     
 # Get Draft
+# GET /espn/draft?sport=football&league=nfl&season=2025
 def get_draft(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        season = params.get("season", "")
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        season = event.get("queryStringParameters", {}).get("season", "")
 
         if sport is None or league is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
@@ -699,12 +701,12 @@ def get_draft(event, logger):
         return json.dumps("Server error")
     
 # Get Team News
+# GET /espn/team/news?sport=football&league=nfl&team_id=1
 def get_team_news(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        sport = params.get("sport", None)
-        league = params.get("league", None)
-        team_id = params.get("team_id", None)
+        sport = event.get("queryStringParameters", {}).get("sport", None)
+        league = event.get("queryStringParameters", {}).get("league", None)
+        team_id = event.get("queryStringParameters", {}).get("team_id", None)
 
         if sport is None or league is None or team_id is None:
             return { "Message": "Sport, League, or Team ID is required." }, 400
@@ -725,10 +727,10 @@ def get_team_news(event, logger):
         return json.dumps("Server error")
     
 # Get Specific Nights
+# GET /espn/specific/nights?night=monday
 def get_specific_nights(event, logger):
     try:
-        params = event.get("queryStringParameters", {})
-        night = params.get("night", None)
+        night = event.get("queryStringParameters", {}).get("night", None)
 
         if night is None:
             return { "Message": "Night is required." }, 400
