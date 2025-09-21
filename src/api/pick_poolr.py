@@ -1,10 +1,6 @@
 import json
-import os
-import logging
 import datetime
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
-from botocore.exceptions import ClientError
 from utils.helper import build_response
 
 dynamodb = boto3.resource("dynamodb")
@@ -23,6 +19,10 @@ def create_bet_record(event, logger):
         return build_response(400, "Missing 'bettor', 'week' or 'name' in request body")
     
     logger.info(f"Creating new bet record for {bettor} - {week}...")
+
+    # Add status to each prop as "PENDING"
+    for prop in props:
+        prop["status"] = "PENDING"
 
     try:
         response = pick_poolr_table.put_item(
@@ -75,6 +75,57 @@ def get_bet_record(event, logger):
     except Exception as e:
         raise
 
+# UPDATE (Modify existing record)
+def update_bet_record(event, logger):
+    body = json.loads(event.get("body", "{}"))
+    bettor = body.get("bettor", None)
+    week = body.get("week", None)
+    props = body.get("props", [])
+    total_odds = body.get("total_odds", 0)
+    status = body.get("status", None)
+
+    if bettor is None or week is None:
+        return build_response(400, "Missing 'bettor' or 'week' in request body")
+    
+    logger.info(f"Updating bet record for {bettor} - {week}...")
+
+    update_expression = "SET updated_at = :updated_at"
+    expression_attribute_values = {
+        ":updated_at": datetime.datetime.now().isoformat()
+    }
+
+    if props:
+        update_expression += ", props = :props"
+        expression_attribute_values[":props"] = props
+    if total_odds:
+        update_expression += ", total_odds = :total_odds"
+        expression_attribute_values[":total_odds"] = total_odds
+    if status is not None:
+        update_expression += ", status = :status"
+        expression_attribute_values[":status"] = status
+
+    try:
+        response = pick_poolr_table.update_item(
+            Key={
+                "PK": f"BETTOR#{bettor}",
+                "SK": f"WEEK#{week}"
+            },
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expression_attribute_values,
+            ConditionExpression="attribute_exists(bettor) AND attribute_exists(week)", # ensure record exists
+            ReturnValues="ALL_NEW"
+        )
+        return response
+    except Exception as e:
+        logger.exception("Error updating bet record - ")
+        logger.exception(e)
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            logger.exception("Record does not exist !!")
+            logger.exception(e)
+            return build_response(404, "Record does not exist")
+        else:
+            raise
+
 # DELETE (Remove record completely)
 def delete_bet_record(event, logger):
     body = json.loads(event.get("body", "{}"))
@@ -96,3 +147,36 @@ def delete_bet_record(event, logger):
         return response
     except Exception as e:
         raise
+
+# Check bet outcome (Placeholder for future implementation)
+def check_bet_outcome(event, logger):
+    body = json.loads(event.get("body", "{}"))
+    bettor = body.get("bettor", None)
+    week = body.get("week", None)
+
+    if bettor is None or week is None:
+        return build_response(400, "Missing 'bettor' or 'week' in request body")
+    
+    logger.info(f"Checking bet outcome for {bettor} - {week}...")
+
+    # TODO: Implement actual outcome checking logic
+    try:
+        response = pick_poolr_table.get_item(
+            Key={
+                "PK": f"BETTOR#{bettor}",
+                "SK": f"WEEK#{week}"
+            }
+        ).get("Item", None)
+
+        if response is None:
+            return build_response(404, "Record not found")
+
+    except Exception as e:
+        raise
+
+    # Loop through props, check results, update status accordingly
+    props = response.get("props", [])
+
+    outcomes = []
+
+    return build_response(200, outcomes)
