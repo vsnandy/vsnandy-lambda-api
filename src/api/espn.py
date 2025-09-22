@@ -279,10 +279,10 @@ def get_conference_standings(event, logger):
 
         response = http.request(
             "GET",
-            f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/types/{season_type}/groups/{id}/standings"
+            f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/types/{season_type}/groups/{id}/standings/0"
         )
 
-        logger.info("Response Code: {response.status}")
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -379,7 +379,7 @@ def get_team_depth_chart(event, logger):
         params = event.get("queryStringParameters", {})
         sport = params.get("sport", None)
         league = params.get("league", None)
-        year = params.get("yr", None)
+        year = params.get("year", None)
         id = params.get("id", None)
 
         if sport is None or league is None or year is None or id is None:
@@ -414,7 +414,7 @@ def get_athlete_overview(event, logger):
 
         response = http.request(
             "GET",
-            f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/nfl/{league}/{ath_id}/overview"
+            f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/{league}/athletes/{ath_id}/overview"
         )
 
         logger.info(f"Response Code: {response.status}")
@@ -461,7 +461,7 @@ def get_athlete_eventlog(event, logger):
         params = event.get("queryStringParameters", {})
         sport = params.get("sport", None)
         league = params.get("league", None)
-        year = params.get("yr", None)
+        year = params.get("year", None)
         ath_id = params.get("ath_id", None)
 
         if sport is None or league is None or year is None or ath_id is None:
@@ -650,14 +650,14 @@ def get_site_leaders(event, logger):
         league = params.get("league", None)
         event_id = params.get("event_id", None)
         season = params.get("season", "")
-        season_type = params.get("seasonType", "")
+        season_type = params.get("season_type", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
 
         response = http.request(
             "GET",
-            f"{ESPN_SITE_URL}/apis/site/v3/sports/{sport}/{league}/leaders?season={season}&seasonType={season_type}"
+            f"{ESPN_SITE_URL}/apis/site/v3/sports/{sport}/{league}/leaders?season={season}&seasontype={season_type}"
         )
 
         logger.info(f"Response Code: {response.status}")
@@ -679,7 +679,7 @@ def get_core_leaders(event, logger):
         league = params.get("league", None)
         event_id = params.get("event_id", None)
         season = params.get("season", "")
-        season_type = params.get("seasonType", "")
+        season_type = params.get("season_type", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
