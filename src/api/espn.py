@@ -21,12 +21,12 @@ def get_athletes(event, logger):
             return {"Message": "Sport and League parameters are required"}, 400
         
         response = http.request("GET", f"{ESPN_SPORTS_URL}/v3/sports/{sport}/{league}/athletes?limit={limit}&page={page}")
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
 
         data = json.loads(response.data)
 
-        print("Response Keys:", data.keys())
-        print("Response Pages:", data["pageCount"])
+        logger.info(f"Response Keys: {data.keys()}")
+        logger.info(f"Response Pages: {data['pageCount']}")
 
         body = {
             "players": data["items"],
@@ -57,7 +57,7 @@ def get_teams(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/teams",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         data = json.loads(response.data)
         body = {
             "teams": data["sports"][0]["leagues"][0]["teams"]
@@ -85,7 +85,7 @@ def get_site_team(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/teams/{id}",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -113,7 +113,7 @@ def get_core_team(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{year}/teams/{id}",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -137,7 +137,7 @@ def get_site_scoreboard(event, logger):
             "GET", 
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/scoreboard?week={week}",
         )
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -160,7 +160,7 @@ def get_cdn_scoreboard(event, logger):
             "GET", 
             f"{ESPN_CDN_URL}/core/{league}/scoreboard?xhr=1&limit={limit}",
         )
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -185,7 +185,7 @@ def get_athlete(event, logger):
             f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/{league}/athletes/{id}",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -210,7 +210,7 @@ def get_cdn_schedule(event, logger):
             f"{ESPN_CDN_URL}/core/nfl/schedule?year={year}&week={week}&xhr=1",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -236,7 +236,7 @@ def get_site_standings(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/standings?season={season}",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -254,7 +254,7 @@ def get_cdn_standings(event, logger):
             f"{ESPN_CDN_URL}/core/nfl/standings?xhr=1",
         )
 
-        print("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -279,10 +279,10 @@ def get_conference_standings(event, logger):
 
         response = http.request(
             "GET",
-            f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/types/{season_type}/groups/{id}/standings"
+            f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/types/{season_type}/groups/{id}/standings/0"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
         return body
     
@@ -308,7 +308,7 @@ def get_team_roster(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/teams/{id}/roster"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -335,7 +335,7 @@ def get_team_schedule(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/teams/{id}/schedule"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -362,7 +362,7 @@ def get_team_injuries(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/teams/{id}/injuries"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -379,7 +379,7 @@ def get_team_depth_chart(event, logger):
         params = event.get("queryStringParameters", {})
         sport = params.get("sport", None)
         league = params.get("league", None)
-        year = params.get("yr", None)
+        year = params.get("year", None)
         id = params.get("id", None)
 
         if sport is None or league is None or year is None or id is None:
@@ -390,7 +390,7 @@ def get_team_depth_chart(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{year}/teams/{id}/depthcharts"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -414,10 +414,10 @@ def get_athlete_overview(event, logger):
 
         response = http.request(
             "GET",
-            f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/nfl/{league}/{ath_id}/overview"
+            f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/{league}/athletes/{ath_id}/overview"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -444,7 +444,7 @@ def get_athlete_gamelog(event, logger):
             f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/{league}/athletes/{ath_id}/gamelog"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -461,7 +461,7 @@ def get_athlete_eventlog(event, logger):
         params = event.get("queryStringParameters", {})
         sport = params.get("sport", None)
         league = params.get("league", None)
-        year = params.get("yr", None)
+        year = params.get("year", None)
         ath_id = params.get("ath_id", None)
 
         if sport is None or league is None or year is None or ath_id is None:
@@ -472,7 +472,7 @@ def get_athlete_eventlog(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{year}/athletes/{ath_id}/eventlog"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -499,7 +499,7 @@ def get_athlete_splits(event, logger):
             f"{ESPN_SITE_WEB_URL}/apis/common/v3/sports/{sport}/{league}/athletes/{ath_id}/splits"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -526,7 +526,7 @@ def get_game_summary(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/summary?event={event_id}"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -551,7 +551,7 @@ def get_game_boxscore(event, logger):
             f"{ESPN_CDN_URL}/core/nfl/boxscore?xhr=1&gameId={event_id}"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -576,7 +576,7 @@ def get_game_playbyplay(event, logger):
             f"{ESPN_CDN_URL}/core/nfl/playbyplay?xhr=1&gameId={event_id}"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -604,7 +604,7 @@ def get_game_plays(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/events/{event_id}/competitions/{event_id}/plays?limit={limit}"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -631,7 +631,7 @@ def get_game_drives(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/events/{event_id}/competitions/{event_id}/drives"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -650,17 +650,17 @@ def get_site_leaders(event, logger):
         league = params.get("league", None)
         event_id = params.get("event_id", None)
         season = params.get("season", "")
-        season_type = params.get("seasonType", "")
+        season_type = params.get("season_type", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
 
         response = http.request(
             "GET",
-            f"{ESPN_SITE_URL}/apis/site/v3/sports/{sport}/{league}/leaders?season={season}&seasonType={season_type}"
+            f"{ESPN_SITE_URL}/apis/site/v3/sports/{sport}/{league}/leaders?season={season}&seasontype={season_type}"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -679,7 +679,7 @@ def get_core_leaders(event, logger):
         league = params.get("league", None)
         event_id = params.get("event_id", None)
         season = params.get("season", "")
-        season_type = params.get("seasonType", "")
+        season_type = params.get("season_type", "")
 
         if sport is None or league is None or event_id is None:
             return { "Message": "Sport, League, or Event ID is required." }, 400
@@ -689,7 +689,7 @@ def get_core_leaders(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/types/{season_type}/leaders"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -716,7 +716,7 @@ def get_draft(event, logger):
             f"{ESPN_SPORTS_URL}/v2/sports/{sport}/leagues/{league}/seasons/{season}/draft"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -743,7 +743,7 @@ def get_team_news(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/sports/{sport}/{league}/news"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
@@ -768,7 +768,7 @@ def get_specific_nights(event, logger):
             f"{ESPN_SITE_URL}/apis/site/v2/{night}nightfootball"
         )
 
-        logger.info("Response Code:", response.status)
+        logger.info(f"Response Code: {response.status}")
         body = json.loads(response.data)
 
         return body
