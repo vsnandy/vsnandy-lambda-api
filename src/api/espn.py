@@ -127,8 +127,8 @@ def get_core_team(event, logger):
 def get_site_scoreboard(event, logger):
     try:
         params = event.get("queryStringParameters", {})
-        sport = params.get("sport", "football")
-        league = params.get("league", "college-football")
+        sport = params.get("sport", None)
+        league = params.get("league", None)
         week = params.get("week", "")
         if sport is None or league is None:
             return {"Message": "Sport and League parameters are required"}, 400
@@ -147,11 +147,11 @@ def get_site_scoreboard(event, logger):
         return json.dumps("Server error")
     
 # Get events for sport
-# GET /espn/cdn/scoreboard
+# GET /espn/cdn/scoreboard?league=nfl&limit=10
 def get_cdn_scoreboard(event, logger):
     try:
         params = event.get("queryStringParameters", {})
-        league = params.get("league", "college-football")
+        league = params.get("league", None)
         limit = params.get("limit", 10)
         if league is None:
             return {"Message": "League parameter is required"}, 400
@@ -537,7 +537,7 @@ def get_game_summary(event, logger):
         return json.dumps("Server error")
     
 # Get Game Boxscore
-# GET /espn/game/boxscore?event_id=
+# GET /espn/game/boxscore?event_id=401772510
 def get_game_boxscore(event, logger):
     try:
         params = event.get("queryStringParameters", {})
@@ -562,7 +562,7 @@ def get_game_boxscore(event, logger):
         return json.dumps("Server error")
     
 # Get Game Play-by-Play
-# GET /espn/game/playbyplay?event_id=
+# GET /espn/game/playbyplay?event_id=401772510
 def get_game_playbyplay(event, logger):
     try:
         params = event.get("queryStringParameters", {})
@@ -587,7 +587,7 @@ def get_game_playbyplay(event, logger):
         return json.dumps("Server error")
     
 # Get Game Plays
-# GET /espn/game/plays?sport=football&league=nfl&event_id=&limit=10
+# GET /espn/game/plays?sport=football&league=nfl&event_id=401772510&limit=10
 def get_game_plays(event, logger):
     try:
         params = event.get("queryStringParameters", {})
@@ -615,7 +615,7 @@ def get_game_plays(event, logger):
         return json.dumps("Server error")
     
 # Get Game Drives
-# GET /espn/game/drives?sport=football&league=nfl&event_id=
+# GET /espn/game/drives?sport=football&league=nfl&event_id=401772510
 def get_game_drives(event, logger):
     try:
         params = event.get("queryStringParameters", {})
@@ -642,7 +642,7 @@ def get_game_drives(event, logger):
         return json.dumps("Server error")
     
 # Get Leaders
-# GET /espn/site/leaders?sport=football&league=nfl&event_id&season=2025&season_type=1
+# GET /espn/site/leaders?sport=football&league=nfl&event_id=401772510&season=2025&season_type=1
 def get_site_leaders(event, logger):
     try:
         params = event.get("queryStringParameters", {})
@@ -671,7 +671,7 @@ def get_site_leaders(event, logger):
         return json.dumps("Server error")
     
 # Get Leaders (Core API)
-# GET /espn/core/leaders?sport=football&league=nfl&event_id&season=2025&season_type=1
+# GET /espn/core/leaders?sport=football&league=nfl&event_id=401772510&season=2025&season_type=1
 def get_core_leaders(event, logger):
     try:
         params = event.get("queryStringParameters", {})
@@ -754,7 +754,7 @@ def get_team_news(event, logger):
         return json.dumps("Server error")
     
 # Get Specific Nights
-# GET /espn/specific/nights?night=monday
+# GET /espn/specific-nights?night=monday
 def get_specific_nights(event, logger):
     try:
         params = event.get("queryStringParameters", {})
