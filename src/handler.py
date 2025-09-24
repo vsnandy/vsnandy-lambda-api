@@ -11,7 +11,7 @@ from api.ncaa import (
 )
 from api.pick_poolr import (
     create_bet_record, get_bet_record, delete_bet_record, update_bet_record,
-    check_bet_outcome
+    check_bet_outcome, get_bets_for_year
 )
 from api.espn import (
     get_athletes, get_teams, get_site_team, get_core_team, get_site_scoreboard, 
@@ -83,7 +83,8 @@ ROUTES = {
         "/ncaa/wapit/league": "get_wapit_league",
 
         # PICK POOLR API
-        "/pick-poolr/bets": "get_bet_record",
+        "/pick-poolr/bets": "get_bets_for_year",
+        "/pick-poolr/bet": "get_bet_record",
         "/pick-poolr/bets/check-outcome": "check_bet_outcome",
     },
     "POST": {
@@ -94,15 +95,15 @@ ROUTES = {
         "/ncaa/wapit/league": "post_wapit_draft",
 
         # PICK POOLR API
-        "/pick-poolr/bets": "create_bet_record",
+        "/pick-poolr/bet": "create_bet_record",
     },
     "PATCH": {
         # PICK POOLR API
-        "/pick-poolr/bets": "update_bet_record",
+        "/pick-poolr/bet": "update_bet_record",
     },
     "DELETE": {
         # PICK POOLR API
-        "/pick-poolr/bets": "delete_bet_record"
+        "/pick-poolr/bet": "delete_bet_record"
     }
 }
 

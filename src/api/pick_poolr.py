@@ -2,6 +2,7 @@ import json
 import datetime
 import boto3
 from utils.helper import build_response
+from boto3.dynamodb.conditions import Attr
 
 dynamodb = boto3.resource("dynamodb")
 pick_poolr_table_name = "pick_poolr_bets"
@@ -180,3 +181,22 @@ def check_bet_outcome(event, logger):
     outcomes = []
 
     return build_response(200, outcomes)
+
+# READ (Get record by bettor + week)
+def get_bets_for_year(event, logger):
+    year = event.get("queryStringParameters", {}).get("year")
+    if year is None:
+        return build_response(400, "Missing 'year' in query string")
+    
+    logger.info(f"Getting all bets for year - {year}...")
+
+    try:
+        response = pick_poolr_table.scan(
+            FilterExpression=Attr("SK").begins_with(f"WEEK#{year}")
+        )
+
+        items = response["Items"]
+
+        return items
+    except Exception as e:
+        raise
