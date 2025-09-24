@@ -124,7 +124,7 @@ def handler(event, context):
     try:
         # Route the request
         # Check if http_method is OPTIONS
-        if (http_method.equals("OPTIONS")):
+        if (http_method == "OPTIONS"):
             route_handler = ROUTES["OPTIONS"]["default"]
         else:
             route_handler = ROUTES.get(http_method, {}).get(path, None)
