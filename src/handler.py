@@ -123,7 +123,11 @@ def handler(event, context):
 
     try:
         # Route the request
-        route_handler = ROUTES.get(http_method, {}).get(path, None)
+        # Check if http_method is OPTIONS
+        if (http_method.equals("OPTIONS")):
+            route_handler = ROUTES["OPTIONS"]["default"]
+        else:
+            route_handler = ROUTES.get(http_method, {}).get(path, None)
         logger.info(f"Route Handler: {route_handler}")
         if route_handler:
             handler_function = globals()[route_handler]
