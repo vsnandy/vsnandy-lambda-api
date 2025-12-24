@@ -567,13 +567,14 @@ def get_game_playbyplay(event, logger):
     try:
         params = event.get("queryStringParameters", {})
         event_id = params.get("event_id", None)
+        league = params.get("league", None)
 
         if event_id is None:
             return { "Message": "Event ID is required." }, 400
 
         response = http.request(
             "GET",
-            f"{ESPN_CDN_URL}/core/nfl/playbyplay?xhr=1&gameId={event_id}"
+            f"{ESPN_CDN_URL}/core/{league}/playbyplay?xhr=1&gameId={event_id}"
         )
 
         logger.info(f"Response Code: {response.status}")
