@@ -668,7 +668,7 @@ resource "aws_lambda_function" "auth_lambda_function" {
   function_name = "vsnandy-lambda-authorizer"
   role = aws_iam_role.lambda_authorizer_role.arn
   handler = "handler.handler"
-  runtime = "python3.10"
+  runtime = "python3.12"
 }
 
 /*

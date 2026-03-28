@@ -1,7 +1,6 @@
 import json
 import datetime
 import boto3
-from utils.helper import build_response
 from boto3.dynamodb.conditions import Attr
 
 dynamodb = boto3.resource("dynamodb")
@@ -17,7 +16,7 @@ def create_bet_record(event, logger):
     props = body.get("props", [])
     total_odds = body.get("total_odds", 0)
     if bettor is None or week is None or name is None:
-        return build_response(400, "Missing 'bettor', 'week' or 'name' in request body")
+        return 400, "Missing 'bettor', 'week' or 'name' in request body"
     
     logger.info(f"Creating new bet record for {bettor} - {week}...")
 
@@ -26,7 +25,7 @@ def create_bet_record(event, logger):
         prop["status"] = "PENDING"
 
     try:
-        response = pick_poolr_table.put_item(
+        pick_poolr_table.put_item(
             Item={
                 "PK": f"BETTOR#{bettor}",
                 "SK": f"WEEK#{week}",
@@ -41,14 +40,14 @@ def create_bet_record(event, logger):
             },
             ConditionExpression="attribute_not_exists(bettor) AND attribute_not_exists(week)" # avoid overwrite
         )
-        return response
+        return 201, {"bettor": bettor, "week": week, "status": "PENDING"}
     except Exception as e:
         logger.exception("Error creating bet record - ")
         logger.exception(e)
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
             logger.exception("Record already exists !!")
             logger.exception(e)
-            return build_response(400, "Record already exists")
+            return 400, "Record already exists"
         else:
             raise
 
@@ -57,8 +56,8 @@ def get_bet_record(event, logger):
     bettor = event.get("queryStringParameters", {}).get("bettor", None)
     week = event.get("queryStringParameters", {}).get("week", None)
     if bettor is None or week is None:
-        return build_response(400, "Missing 'bettor' or 'week' in query string")
-    
+        return 400, "Missing 'bettor' or 'week' in query string"
+
     logger.info(f"Getting bet record for {bettor} - {week}...")
 
     try:
@@ -70,9 +69,9 @@ def get_bet_record(event, logger):
         ).get("Item", None)
 
         if response is None:
-            return build_response(404, "Record not found")
-        
-        return response
+            return 404, "Record not found"
+
+        return 200, response
     except Exception as e:
         raise
 
@@ -86,8 +85,8 @@ def update_bet_record(event, logger):
     status = body.get("status", None)
 
     if bettor is None or week is None:
-        return build_response(400, "Missing 'bettor' or 'week' in request body")
-    
+        return 400, "Missing 'bettor' or 'week' in request body"
+
     logger.info(f"Updating bet record for {bettor} - {week}...")
 
     update_expression = "SET updated_at = :updated_at"
@@ -116,14 +115,14 @@ def update_bet_record(event, logger):
             ConditionExpression="attribute_exists(bettor) AND attribute_exists(week)", # ensure record exists
             ReturnValues="ALL_NEW"
         )
-        return response
+        return 200, response.get("Attributes", {})
     except Exception as e:
         logger.exception("Error updating bet record - ")
         logger.exception(e)
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
             logger.exception("Record does not exist !!")
             logger.exception(e)
-            return build_response(404, "Record does not exist")
+            return 404, "Record does not exist"
         else:
             raise
 
@@ -134,30 +133,29 @@ def delete_bet_record(event, logger):
     week = body.get("week", None)
 
     if bettor is None or week is None:
-        return build_response(400, "Missing 'bettor' or 'week' in request body")
-    
+        return 400, "Missing 'bettor' or 'week' in request body"
+
     logger.info(f"Deleting bet record for {bettor} - {week}...")
 
     try:
-        response = pick_poolr_table.delete_item(
+        pick_poolr_table.delete_item(
             Key={
                 "PK": f"BETTOR#{bettor}",
                 "SK": f"WEEK#{week}"
             }
         )
-        return response
+        return 200, {"bettor": bettor, "week": week, "deleted": True}
     except Exception as e:
         raise
 
 # Check bet outcome (Placeholder for future implementation)
 def check_bet_outcome(event, logger):
-    body = json.loads(event.get("body", "{}"))
-    bettor = body.get("bettor", None)
-    week = body.get("week", None)
+    bettor = event.get("queryStringParameters", {}).get("bettor", None)
+    week = event.get("queryStringParameters", {}).get("week", None)
 
     if bettor is None or week is None:
-        return build_response(400, "Missing 'bettor' or 'week' in request body")
-    
+        return 400, "Missing 'bettor' or 'week' in request body"
+
     logger.info(f"Checking bet outcome for {bettor} - {week}...")
 
     # TODO: Implement actual outcome checking logic
@@ -170,7 +168,7 @@ def check_bet_outcome(event, logger):
         ).get("Item", None)
 
         if response is None:
-            return build_response(404, "Record not found")
+            return 404, "Record not found"
 
     except Exception as e:
         raise
@@ -180,14 +178,14 @@ def check_bet_outcome(event, logger):
 
     outcomes = []
 
-    return build_response(200, outcomes)
+    return 200, outcomes
 
 # READ (Get record by bettor + week)
 def get_bets_for_year(event, logger):
     year = event.get("queryStringParameters", {}).get("year")
     if year is None:
-        return build_response(400, "Missing 'year' in query string")
-    
+        return 400, "Missing 'year' in query string"
+
     logger.info(f"Getting all bets for year - {year}...")
 
     try:
@@ -197,6 +195,6 @@ def get_bets_for_year(event, logger):
 
         items = response["Items"]
 
-        return items
+        return 200, items
     except Exception as e:
         raise

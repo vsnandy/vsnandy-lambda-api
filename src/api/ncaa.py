@@ -25,6 +25,12 @@ NCAA_SCHOOLS_URL = "https://www.ncaa.com/json/schools"
 NCAA_API_URL = "https://data.ncaa.com/casablanca"
 NCAA_MM_LIVE_URL = "https://sdataprod.ncaa.com/"
 
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()  # e.g. "2024-01-15T10:30:00"
+        return super().default(obj)
+
 # Get NCAA schools
 def get_schools(event, logger):
     try:
@@ -36,11 +42,11 @@ def get_schools(event, logger):
             "schools": data
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception("Exception in Get Schools method !!")
         logger.exception(e)
-        return json.dumps("Server error")
+        return 500, {"error": "Server error"}
         
 # Get NCAA Game Schedule for a Sport/Division/Year/Month
 def get_schedule(event, logger):
@@ -58,11 +64,11 @@ def get_schedule(event, logger):
             "schedule": data
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception("Exception in Get Schedule method !!")
         logger.exception(e)
-        return json.dumps("Server error")
+        return 500, {"error": "Server error"}
     
 # Get NCAA Scoreboard for a Sport/Division/Date
 def get_scoreboard(event, logger):
@@ -79,20 +85,20 @@ def get_scoreboard(event, logger):
             "scoreboard": data
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception("Exception in Get Scoreboard method !!")
         logger.exception(e)
-        return json.dumps("Server Error")
-    
+        return 500, {"error": "Server Error"}
+
 # Get NCAA Game Details for a Game/Page
 def get_game_details(event, logger):
     try:
         game_id = event.get("queryStringParameters", {}).get("GameID", None)
         page = event.get("queryStringParameters", {}).get("Page", "summary") # summary, playbyplay, boxscore
         if game_id is None:
-            return json.dumps("Missing GameID in query string")
-        
+            return 400, {"error": "Missing GameID in query string"}
+
         response = http.request("GET", f"{NCAA_API_URL}/game/{game_id}/{page}.json")
         print("Response Code:", response.status)
         data = json.loads(response.data)
@@ -101,25 +107,25 @@ def get_game_details(event, logger):
             page: data
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception("Exception in Get Scoreboard method !!")
         logger.exception(e)
-        return json.dumps("Server Error")
+        return 500, {"error": "Server Error"}
     
 
 # Get NCAA March Madness WAPIT stats for a player
 def get_wapit_stats(event, logger):
-    LOGGER_CONTEXT = f"[ncaa.py / get_wapit_stats({player_name}, {number}, {school}, {year})]"
-    logger.info(f"{LOGGER_CONTEXT} - In Get WAPIT Stats!!!")
+    logger.info("[ncaa.py / get_wapit_stats] - In Get WAPIT Stats!!!")
     try:
         id = event.get("queryStringParameters", {}).get("id", None)
         player_name = event.get("queryStringParameters", {}).get("player_name", None)
         number = event.get("queryStringParameters", {}).get("number", None)
         school = event.get("queryStringParameters", {}).get("school", None)
         year = event.get("queryStringParameters", {}).get("year", str(datetime.now().year))
+        LOGGER_CONTEXT = f"[ncaa.py / get_wapit_stats({player_name}, {number}, {school}, {year})]"
         if id is None or player_name is None or number is None or school is None or year is None:
-            return json.dumps("Missing id, player_name, number, school or year in query string")
+            return 400, {"error": "Missing id, player_name, number, school or year in query string"}
         
         start_time = time.time()
 
@@ -188,21 +194,21 @@ def get_wapit_stats(event, logger):
             "stats": player_stats
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception("Exception in Get Scoreboard method !!")
         logger.exception(e)
-        return json.dumps("Server Error")
-    
+        return 500, {"error": "Server Error"}
+
 
 # Get NCAA March Madness WAPIT stats for an entire league
 def get_all_wapit_stats(event, logger):
-    LOGGER_CONTEXT = f"[ncaa.py / get_all_wapit_stats({year})]"
-    logger.info(f"{LOGGER_CONTEXT} - In Get All WAPIT Stats!!!")
+    logger.info("[ncaa.py / get_all_wapit_stats] - In Get All WAPIT Stats!!!")
     try:
         year = event.get("queryStringParameters", {}).get("year", str(datetime.now().year))
+        LOGGER_CONTEXT = f"[ncaa.py / get_all_wapit_stats({year})]"
         if year is None:
-            return json.dumps("Missing year in query string")
+            return 400, {"error": "Missing year in query string"}
         
         start_time = time.time()
 
@@ -295,12 +301,12 @@ def get_all_wapit_stats(event, logger):
             "stats": player_stats
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception("Exception in Get Scoreboard method !!")
         logger.exception(e)
-        return json.dumps("Server Error")
-    
+        return 500, {"error": "Server Error"}
+
 
 # Get NCAA March Madness Tournament Players
 # 1. Get schedule and determine Day 1 & 2 of tournament (3rd Thursday of March = Day 1)
@@ -311,10 +317,10 @@ def get_wapit_players(event, logger):
     try:
         year = event.get("queryStringParameters", {}).get("year", str(datetime.now().year))
         if year is None:
-            return json.dumps("Missing year in query string")
-        
+            return 400, {"error": "Missing year in query string"}
+
         start_time = time.time()
-        
+
         #URL --- https://sdataprod.ncaa.com/?operationName=gamecenter_game_stats_web&variables={"seasonYear":2024}&extensions={"persistedQuery":{"version":1,"sha256Hash":"0677d7ecf3cf630d58ed4f221c74908fb4494c12e0dacb70c45190d55accdc74"}}
         response = http.request(
             "GET", 
@@ -354,24 +360,40 @@ def get_wapit_players(event, logger):
             "players": players
         }
 
-        return body
+        return 200, body
     except Exception as e:
         logger.exception(f"{LOGGER_CONTEXT} - Exception in Get Scoreboard method !!")
         logger.exception(e)
-        return json.dumps("Server Error")
+        return 500, {"error": "Server Error"}
     
 
 # GET /ncaa/wapit/league/{league_id}/year/{year}
 # Grab the WAPIT league from the DB
 def get_wapit_league(event, logger):
-    LOGGER_CONTEXT = f"[ncaa.py / get_wapit_league({league_id}, {year})]"
     try:
         league_id = event.get("pathParameters", {}).get("league_id", None)
         year = event.get("pathParameters", {}).get("year", str(datetime.now().year))
-        cognito_user_pool_id = os.getenv("COGNITO_USER_POOL_ID", None)
+        cognito_user_pool_id = event.get("queryStringParameters", {}).get("user_pool_id", None)
+
+        logger.info(f"League ID: {league_id}")
+        logger.info(f"Year: {year}")
+        logger.info(f"User Pool ID: {cognito_user_pool_id}")
+
         if league_id is None or year is None or cognito_user_pool_id is None:
-            return json.dumps("Missing league_id, year or COGNITO_USER_POOL_ID in query string")
+            return 400, {
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Missing league_id, year or user_pool_id in request",
+                    "details": [
+                        {"field": "league_id", "issue": "Required field is missing"},
+                        {"field": "year", "issue": "Must be a 4 digit number"},
+                        {"field": "user_pool_id", "issue": "Must be a valid user pool id"}
+                    ]
+                }
+            }
         
+        LOGGER_CONTEXT = f"[ncaa.py / get_wapit_league({league_id}, {year})]"
+
         start_time = time.time()
 
         draft = []
@@ -383,7 +405,12 @@ def get_wapit_league(event, logger):
         if "Items" in response:
             draft = response["Items"]
         else:
-            return { "Message": f"League {league_id + year} not found" }, 404
+            return 404, { 
+                "error": {
+                    "code": "NOT_FOUND",
+                    "message": "League not found for given year",
+                }
+            }
         
         # Get the list of users in the Cognito wapit_ group
         users = get_users_in_group(cognito, cognito_user_pool_id, f"wapit_{league_id}{year}", logger)
@@ -397,33 +424,41 @@ def get_wapit_league(event, logger):
         logger.info(f"{LOGGER_CONTEXT} - Elapsed time: {elapsed_time:.4f} seconds")
 
         body = {
-            "timeElapsed": elapsed_time,
-            "leagueName": league_id,
-            "year": year,
-            "users": users,
-            "teams": teams,
-            "draft": draft
+            "data": {
+                "leagueName": league_id,
+                "year": year,
+                "users": users,
+                "teams": teams,
+                "draft": draft
+            },
+            "timeElapsed": elapsed_time
         }
 
-        return body
+        logger.info(f"Response Body: {body}")
+
+        return 200, body
     
     except Exception as e:
-        logger.exception(f"{LOGGER_CONTEXT} - Exception in Get WAPIT League method !!")
+        logger.exception("Exception in Get WAPIT League method !!")
         logger.exception(e)
-        return json.dumps("Server Error")
+        return 500, {
+            "status": "Internal Server Error",
+            "message": "An exception occurred",
+            "timestamp": datetime.now().isoformat()
+        }
     
 
 # POST /ncaa/wapit/league/{league_id}/year/{year}/draft
 def post_wapit_draft(event, logger):
-    LOGGER_CONTEXT = f"[ncaa.py] / post_wapit_draft({league_id}, {year})"
     try:
         league_id = event.get("pathParameters", {}).get("league_id", None)
         year = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        LOGGER_CONTEXT = f"[ncaa.py / post_wapit_draft({league_id}, {year})]"
         body = json.loads(event.get("body", "{}"))
         draft_picks = body.get("draft_picks", [])
 
         if league_id is None or year is None:
-            return json.dumps("Missing league_id or year in query string")
+            return 400, {"error": "Missing league_id or year in path parameters"}
         
         start_time = time.time()
 
@@ -458,9 +493,9 @@ def post_wapit_draft(event, logger):
             "draft_picks": draft_picks,
         }
 
-        return body
-    
+        return 201, body
+
     except Exception as e:
         logger.exception(f"{LOGGER_CONTEXT} - Exception in POST WAPIT Draft !!")
         logger.exception(e)
-        return json.dumps("Server Error")
+        return 500, {"error": "Server Error"}

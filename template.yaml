@@ -1,40 +1,118 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: AWS SAM template with a simple API definition
+Description: Local SAM template for API Gateway + Lambda
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+    Runtime: python3.12
+    Environment:
+      Variables:
+        ENVIRONMENT: local
+
 Resources:
-  ApiFunction:
+  ApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: local
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowOrigins:
+          - "*"
+
+  MyLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: vsnandy-lambda-api
+      CodeUri: ./src/
+      Handler: handler.handler
       Events:
-        ApiEvent:
+        # -----------------------------------------------
+        # CATCH-ALL (your existing proxy route)
+        # -----------------------------------------------
+        ProxyRoute:
           Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /{proxy+}
+            Method: ANY
+
+        # -----------------------------------------------
+        # NCAA - Explicit Routes with Path Parameters
+        # -----------------------------------------------
         GetWapitLeague:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ApiGateway
             Path: /ncaa/wapit/league/{league_id}/year/{year}
             Method: GET
+
         PostWapitLeague:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ApiGateway
             Path: /ncaa/wapit/league/{league_id}/year/{year}
             Method: POST
-      Handler: handler.handler
-      Runtime: python3.10
-      CodeUri: src/
-      Timeout: 900
-Transform: AWS::Serverless-2016-10-31
 
+        GetWapitStats:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /ncaa/wapit/stats/league
+            Method: GET
 
-#Transform: AWS::Serverless-2016-10-31
-#
-#Description:
-#  Vsnandy Lambda API
-#
-#Resources:
-#  VsnandyLambdaApi:
-#    Type: AWS::Serverless::Function
-#    Properties:
-#      Runtime: python3.10
-#      Handler: index.handler
-#      CodeUri: src/
-#      Handler: handler.handler
-#      Timeout: 900
+        # -----------------------------------------------
+        # PICK POOLR - Explicit Routes with Path Parameters
+        # -----------------------------------------------
+        GetBet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /pick-poolr/bet/{bet_id}
+            Method: GET
+
+        CreateBet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /pick-poolr/bet
+            Method: POST
+
+        UpdateBet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /pick-poolr/bet/{bet_id}
+            Method: PATCH
+
+        DeleteBet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /pick-poolr/bet/{bet_id}
+            Method: DELETE
+
+        # -----------------------------------------------
+        # HEALTH CHECK
+        # -----------------------------------------------
+        GetHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /health
+            Method: GET
+
+        PostHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /health
+            Method: POST

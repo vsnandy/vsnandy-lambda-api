@@ -1,11 +1,20 @@
 import json
 
 from datetime import datetime, timedelta
+from decimal import Decimal
 from itertools import groupby
 
 ####################
 # HELPER FUNCTIONS #
 ####################
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 # Build the response to send
 def build_response(status_code, response_body=None):
@@ -16,11 +25,10 @@ def build_response(status_code, response_body=None):
             "Access-Control-Allow-Origin": "https://vsnandy.github.io,http://localhost:3000",
             "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PATCH",
             "Access-Control-Allow-Headers": "Content-Type,Authorization"
-        }
+        },
+        "body": json.dumps(response_body, cls=DateTimeEncoder) if response_body else None
     }
 
-    if response_body is not None:
-        response["body"] = response_body if isinstance(response_body, str) else json.dumps(response_body, default=str)
     return response
 
 # Calculate the nth day of week of the month/year
