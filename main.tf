@@ -139,12 +139,12 @@ import {
 
 import {
   to = aws_apigatewayv2_route.get_league
-  id = "${var.vsnandy_gw_id}/zugc0vj"
+  id = "${var.vsnandy_gw_id}/h3dnbnj"
 }
 
 import {
   to = aws_apigatewayv2_route.post_league
-  id = "${var.vsnandy_gw_id}/ph2m39r"
+  id = "${var.vsnandy_gw_id}/akgcxt7"
 }
 
 resource "aws_s3_bucket" "terraform_state" {
