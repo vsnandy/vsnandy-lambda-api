@@ -9,7 +9,7 @@ from api.ncaa import (
     get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_draft,
     get_all_wapit_stats, get_wapit_chat, post_wapit_chat, post_wapit_react,
     post_wapit_league, patch_wapit_league,           # ← new
-    delete_wapit_last_pick, delete_wapit_team,        # ← new
+    delete_wapit_team,        # ← new
     post_wapit_draft_bulk
 )
 from api.pick_poolr import (
