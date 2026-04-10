@@ -5,9 +5,12 @@ import logging
 import boto3
 import urllib3
 from api.ncaa import (
-    get_schools, get_schedule, get_scoreboard, get_game_details, 
-    get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_draft, 
-    get_all_wapit_stats
+    get_schools, get_schedule, get_scoreboard, get_game_details,
+    get_wapit_players, get_wapit_stats, get_wapit_league, post_wapit_draft,
+    get_all_wapit_stats, get_wapit_chat, post_wapit_chat, post_wapit_react,
+    post_wapit_league, patch_wapit_league,           # ← new
+    delete_wapit_last_pick, delete_wapit_team,        # ← new
+    post_wapit_draft_bulk
 )
 from api.pick_poolr import (
     create_bet_record, get_bet_record, delete_bet_record, update_bet_record,
@@ -207,6 +210,9 @@ def match_route(event, logger):
             logger.info("GETTING WAPIT LEAGUE!!!")
             status_code, body = get_wapit_league(event, logger)
             return status_code, body
+        elif path == "GET /ncaa/wapit/league/{league_id}/year/{year}/chat":
+            status_code, body = get_wapit_chat(event, logger)
+            return status_code, body
 
         # PICK POOLR API
         elif path == "GET /pick-poolr/bets":
@@ -224,6 +230,23 @@ def match_route(event, logger):
         # NCAA API
         elif path == "POST /ncaa/wapit/league/{league_id}/year/{year}":
             return post_wapit_draft(event, logger)
+        
+        elif path == "POST /ncaa/wapit/league/{league_id}/year/{year}/chat":
+            status_code, body = post_wapit_chat(event, logger)
+            return status_code, body
+
+        elif path == "POST /ncaa/wapit/league/{league_id}/year/{year}/chat/react":
+            status_code, body = post_wapit_react(event, logger)
+            return status_code, body
+        
+        elif path == "POST /ncaa/wapit/league":
+            status_code, body = post_wapit_league(event, logger)
+            return status_code, body
+        
+        # match_route POST block
+        elif path == "POST /ncaa/wapit/league/{league_id}/year/{year}/draft/bulk":
+            status_code, body = post_wapit_draft_bulk(event, logger)
+            return status_code, body
 
         # PICK POOLR API
         elif path == "POST /pick-poolr/bet":
@@ -233,11 +256,23 @@ def match_route(event, logger):
         # PICK POOLR API
         if path == "PATCH /pick-poolr/bet":
             return update_bet_record(event, logger)
+        
+        elif path == "PATCH /ncaa/wapit/league/{league_id}/year/{year}":
+            status_code, body = patch_wapit_league(event, logger)
+            return status_code, body
 
     elif http_method == "DELETE":
         # PICK POOLR API
         if path == "DELETE /pick-poolr/bet":
             return delete_bet_record(event, logger)
+        
+        elif path == "DELETE /ncaa/wapit/league/{league_id}/year/{year}/pick":
+            status_code, body = delete_wapit_last_pick(event, logger)
+            return status_code, body
+
+        elif path == "DELETE /ncaa/wapit/league/{league_id}/year/{year}/team":
+            status_code, body = delete_wapit_team(event, logger)
+            return status_code, body
 
     return return_404(event, logger)
 

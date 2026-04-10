@@ -15,9 +15,11 @@ logger.setLevel(logging.INFO)
 
 http = urllib3.PoolManager()
 
-dynamodb_table_name = "wapit_draft"
+dynamodb_table_name      = "wapit_draft"
+dynamodb_meta_table_name = "wapit_meta"
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(dynamodb_table_name)
+meta_table = dynamodb.Table(dynamodb_meta_table_name)
 
 cognito = boto3.client("cognito-idp")
 
@@ -498,4 +500,398 @@ def post_wapit_draft(event, logger):
     except Exception as e:
         logger.exception(f"{LOGGER_CONTEXT} - Exception in POST WAPIT Draft !!")
         logger.exception(e)
+        return 500, {"error": "Server Error"}
+    
+
+# GET /ncaa/wapit/league/{league_id}/year/{year}/chat
+def get_wapit_chat(event, logger):
+    try:
+        league_id = event.get("pathParameters", {}).get("league_id", None)
+        year      = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        limit     = int(event.get("queryStringParameters", {}).get("limit", 50))
+
+        if league_id is None:
+            return 400, {"error": "Missing league_id"}
+
+        # Chat messages live in the same table under a different key prefix
+        # LeagueID = "{league_id}{year}#CHAT", sorted by Timestamp
+        # get_wapit_chat
+        response = table.query(
+            KeyConditionExpression=(
+                Key("LeagueID").eq(f"{league_id}{year}#CHAT") &
+                Key("PickNumber").begins_with("MSG#")
+            ),
+            ScanIndexForward=False,
+            Limit=limit
+        )
+        messages = list(reversed(response.get("Items", [])))
+        return 200, {"messages": messages}
+    except Exception as e:
+        logger.exception("Exception in get_wapit_chat")
+        return 500, {"error": "Server Error"}
+
+
+# POST /ncaa/wapit/league/{league_id}/year/{year}/chat
+def post_wapit_chat(event, logger):
+    try:
+        league_id = event.get("pathParameters", {}).get("league_id", None)
+        year      = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        body      = json.loads(event.get("body", "{}"))
+        username  = body.get("username")
+        text      = body.get("text", "").strip()
+
+        if not league_id or not username or not text:
+            return 400, {"error": "Missing league_id, username, or text"}
+        if len(text) > 300:
+            return 400, {"error": "Message too long (max 300 chars)"}
+
+        timestamp = datetime.now().isoformat()
+        # post_wapit_chat
+        item = {
+            "LeagueID":  f"{league_id}{year}#CHAT",
+            "PickNumber": f"MSG#{timestamp}",   # sort key — lexicographically sortable by time
+            "Timestamp":  timestamp,
+            "username":   username,
+            "text":       text.strip(),
+            "reactions":  {},
+        }
+        table.put_item(Item=item)
+
+        return 201, {"message": item}
+    except Exception as e:
+        logger.exception("Exception in post_wapit_chat")
+        return 500, {"error": "Server Error"}
+
+
+# POST /ncaa/wapit/league/{league_id}/year/{year}/chat/react
+# post_wapit_react — key uses PickNumber, not Timestamp
+def post_wapit_react(event, logger):
+    try:
+        league_id    = event.get("pathParameters", {}).get("league_id", None)
+        year         = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        body         = json.loads(event.get("body", "{}"))
+        pick_number  = body.get("pick_number")   # "MSG#{timestamp}" string
+        username     = body.get("username")
+        emoji        = body.get("emoji")
+
+        if not all([league_id, pick_number, username, emoji]):
+            return 400, {"error": "Missing required fields"}
+
+        chat_key = f"{league_id}{year}#CHAT"
+        item_key = {"LeagueID": chat_key, "PickNumber": pick_number}
+
+        resp = table.get_item(Key=item_key)
+        item = resp.get("Item")
+        if not item:
+            return 404, {"error": "Message not found"}
+
+        reactions = item.get("reactions", {})
+        reactors  = set(reactions.get(emoji, []))
+        reactors.discard(username) if username in reactors else reactors.add(username)
+        reactions[emoji] = list(reactors)
+
+        table.update_item(
+            Key=item_key,
+            UpdateExpression="SET reactions = :r",
+            ExpressionAttributeValues={":r": reactions}
+        )
+
+        return 200, {"reactions": reactions}
+    except Exception as e:
+        logger.exception("Exception in post_wapit_react")
+        return 500, {"error": "Server Error"}
+    
+def get_jwt_username(event):
+    """Extract Cognito username from the JWT authorizer context."""
+    return (
+        event
+        .get("requestContext", {})
+        .get("authorizer", {})
+        .get("jwt", {})
+        .get("claims", {})
+        .get("cognito:username")
+    )
+
+def validate_commissioner(league_id, year, event, logger):
+    caller = get_jwt_username(event)
+    if not caller:
+        return None, (401, {"error": "Unauthorized"})
+
+    resp = meta_table.get_item(          # ← meta_table
+        Key={"LeagueID": league_id + year}   # ← no PickNumber
+    )
+    meta = resp.get("Item")
+    if not meta:
+        return None, (404, {"error": "League not found"})
+    if meta.get("CommissionerID") != caller:
+        return None, (403, {"error": "Forbidden — you are not the commissioner"})
+
+    return meta, None
+
+# POST /ncaa/wapit/league
+# Creates a brand new league META record
+def post_wapit_league(event, logger):
+    LOGGER_CONTEXT = "[ncaa.py / post_wapit_league]"
+    try:
+        body         = json.loads(event.get("body", "{}"))
+        league_id    = body.get("league_id", "").strip()
+        league_name  = body.get("league_name", "").strip()
+        year         = body.get("year", str(datetime.now().year))
+        total_rounds = int(body.get("total_rounds", 10))
+        draft_order  = body.get("draft_order", [])
+
+        caller = get_jwt_username(event)
+        if not caller:
+            return 401, {"error": "Unauthorized"}
+        if not league_id or not league_name:
+            return 400, {"error": "Missing league_id or league_name"}
+
+        existing = meta_table.get_item(      # ← meta_table
+            Key={"LeagueID": league_id + year}   # ← no PickNumber
+        ).get("Item")
+        if existing:
+            return 409, {"error": "League already exists for this year"}
+
+        meta = {
+            "LeagueID":       league_id + year,  # ← no PickNumber
+            "LeagueName":     league_name,
+            "Year":           year,
+            "CommissionerID": caller,
+            "Status":         "pending",
+            "TotalRounds":    total_rounds,
+            "DraftOrder":     draft_order,
+            "retroMode":      False,
+            "CreatedAt":      datetime.now().isoformat(),
+        }
+        meta_table.put_item(Item=meta)       # ← meta_table
+
+        logger.info(f"{LOGGER_CONTEXT} - Created league {league_id}{year}")
+        return 201, {"meta": meta}
+
+    except Exception as e:
+        logger.exception(f"{LOGGER_CONTEXT} - Exception")
+        return 500, {"error": "Server Error"}
+
+# PATCH /ncaa/wapit/league/{league_id}/year/{year}
+# Updates TotalRounds, DraftOrder, and/or Status — commissioner only
+def patch_wapit_league(event, logger):
+    LOGGER_CONTEXT = "[ncaa.py / patch_wapit_league]"
+    try:
+        league_id = event.get("pathParameters", {}).get("league_id")
+        year      = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        body      = json.loads(event.get("body", "{}"))
+
+        meta, err = validate_commissioner(league_id, year, event, logger)
+        if err:
+            return err
+
+        updates = {}
+        allowed = {"TotalRounds", "DraftOrder", "Status", "LeagueName", "retroMode"}
+        for field in allowed:
+            if field in body:
+                updates[field] = body[field]
+
+        if not updates:
+            return 400, {"error": "No valid fields to update"}
+
+        if "Status" in updates:
+            valid_statuses = {"pending", "active", "complete"}
+            if updates["Status"] not in valid_statuses:
+                return 400, {"error": f"Invalid status. Must be one of: {valid_statuses}"}
+            if updates["Status"] == "active":
+                draft_order = updates.get("DraftOrder", meta.get("DraftOrder", []))
+                if len(draft_order) < 2:
+                    return 400, {"error": "Draft order must have at least 2 teams before activating"}
+
+        expr_parts  = [f"#{k} = :{k}" for k in updates]
+        expr_names  = {f"#{k}": k for k in updates}
+        expr_values = {f":{k}": v for k, v in updates.items()}
+
+        meta_table.update_item(                      # ← meta_table
+            Key={"LeagueID": league_id + year},      # ← no PickNumber
+            UpdateExpression="SET " + ", ".join(expr_parts),
+            ExpressionAttributeNames=expr_names,
+            ExpressionAttributeValues=expr_values,
+        )
+
+        logger.info(f"{LOGGER_CONTEXT} - Updated {league_id}{year}: {list(updates.keys())}")
+        return 200, {"updated": list(updates.keys())}
+
+    except Exception as e:
+        logger.exception(f"{LOGGER_CONTEXT} - Exception")
+        return 500, {"error": "Server Error"}
+
+# DELETE /ncaa/wapit/league/{league_id}/year/{year}/team
+# Removes a team from DraftOrder and deletes all their picks — commissioner only
+def delete_wapit_team(event, logger):
+    LOGGER_CONTEXT = "[ncaa.py / delete_wapit_team]"
+    try:
+        league_id = event.get("pathParameters", {}).get("league_id")
+        year      = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        body      = json.loads(event.get("body", "{}"))
+        team_id   = body.get("team_id")
+
+        if not team_id:
+            return 400, {"error": "Missing team_id"}
+
+        meta, err = validate_commissioner(league_id, year, event, logger)
+        if err:
+            return err
+
+        if meta.get("Status") == "active":
+            return 400, {"error": "Cannot remove a team once the draft is active"}
+
+        draft_order = [u for u in meta.get("DraftOrder", []) if u != team_id]
+
+        meta_table.update_item(                      # ← meta_table
+            Key={"LeagueID": league_id + year},      # ← no PickNumber
+            UpdateExpression="SET DraftOrder = :d",
+            ExpressionAttributeValues={":d": draft_order}
+        )
+
+        # Picks still live in wapit_draft — delete via TeamID GSI
+        response = table.query(
+            IndexName="TeamID-index",
+            KeyConditionExpression=Key("TeamID").eq(team_id)
+        )
+        with table.batch_writer() as batch:
+            for item in response.get("Items", []):
+                if item["LeagueID"] == league_id + year:
+                    batch.delete_item(
+                        Key={
+                            "LeagueID":   item["LeagueID"],
+                            "PickNumber": item["PickNumber"],
+                        }
+                    )
+
+        logger.info(f"{LOGGER_CONTEXT} - Removed team {team_id} from {league_id}{year}")
+        return 200, {"removed": team_id, "newDraftOrder": draft_order}
+
+    except Exception as e:
+        logger.exception(f"{LOGGER_CONTEXT} - Exception")
+        return 500, {"error": "Server Error"}
+
+# Updated get_wapit_league — splits META from picks in the response
+def get_wapit_league(event, logger):
+    try:
+        league_id            = event.get("pathParameters", {}).get("league_id")
+        year                 = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        cognito_user_pool_id = event.get("queryStringParameters", {}).get("user_pool_id")
+
+        if not league_id or not year or not cognito_user_pool_id:
+            return 400, {"error": "Missing league_id, year or user_pool_id"}
+
+        start_time = time.time()
+
+        # META from its own table — no PickNumber needed
+        meta_resp = meta_table.get_item(         # ← meta_table
+            Key={"LeagueID": league_id + year}   # ← no PickNumber
+        )
+        meta = meta_resp.get("Item")
+
+        # Picks from wapit_draft — filter out chat messages
+        draft_resp = table.query(
+            KeyConditionExpression=Key("LeagueID").eq(league_id + year)
+        )
+        draft = [
+            i for i in draft_resp.get("Items", [])
+            if not str(i.get("PickNumber", "")).startswith("MSG#")
+        ]
+
+        if not meta and not draft:
+            return 404, {"error": "League not found"}
+
+        users = get_users_in_group(
+            cognito, cognito_user_pool_id,
+            f"wapit_{league_id}{year}", logger
+        )
+        teams   = {} if not draft else populate_teams_in_league(draft, logger)
+        elapsed = time.time() - start_time
+
+        return 200, {
+            "data": {
+                "meta":       meta,
+                "leagueName": meta.get("LeagueName", league_id) if meta else league_id,
+                "year":       year,
+                "users":      users,
+                "teams":      teams,
+                "draft":      draft,
+            },
+            "timeElapsed": elapsed
+        }
+
+    except Exception as e:
+        logger.exception("Exception in get_wapit_league")
+        return 500, {
+            "status": "Internal Server Error",
+            "message": "An exception occurred",
+            "timestamp": datetime.now().isoformat()
+        }
+
+# POST /ncaa/wapit/league/{league_id}/year/{year}/draft/bulk
+def post_wapit_draft_bulk(event, logger):
+    LOGGER_CONTEXT = "[ncaa.py / post_wapit_draft_bulk]"
+    try:
+        league_id = event.get("pathParameters", {}).get("league_id")
+        year      = event.get("pathParameters", {}).get("year", str(datetime.now().year))
+        body      = json.loads(event.get("body", "{}"))
+        picks     = body.get("picks", [])
+
+        if not league_id:
+            return 400, {"error": "Missing league_id"}
+        if not picks:
+            return 400, {"error": "No picks provided"}
+
+        meta, err = validate_commissioner(league_id, year, event, logger)
+        if err:
+            return err
+        if meta.get("Status") == "complete":
+            return 400, {"error": "Draft is already complete"}
+
+        # Wipe existing picks from wapit_draft (chat stays untouched)
+        existing = table.query(
+            KeyConditionExpression=Key("LeagueID").eq(league_id + year)
+        )
+        existing_picks = [
+            i for i in existing.get("Items", [])
+            if not str(i.get("PickNumber", "")).startswith("MSG#")
+        ]
+        if existing_picks:
+            with table.batch_writer() as batch:
+                for item in existing_picks:
+                    batch.delete_item(
+                        Key={
+                            "LeagueID":   item["LeagueID"],
+                            "PickNumber": item["PickNumber"],
+                        }
+                    )
+
+        # Bulk insert into wapit_draft
+        timestamp = datetime.now().isoformat()
+        counter   = 0
+        with table.batch_writer() as batch:
+            for pick in picks:
+                if not all(k in pick for k in ["PickNumber", "TeamID", "PlayerName"]):
+                    continue
+                batch.put_item(Item={
+                    **pick,
+                    "LeagueID":  league_id + year,
+                    "Timestamp": timestamp,
+                })
+                counter += 1
+
+        # Activate league if still pending
+        if meta.get("Status") == "pending":
+            meta_table.update_item(                      # ← meta_table
+                Key={"LeagueID": league_id + year},      # ← no PickNumber
+                UpdateExpression="SET #s = :s",
+                ExpressionAttributeNames={"#s": "Status"},
+                ExpressionAttributeValues={":s": "active"},
+            )
+
+        logger.info(f"{LOGGER_CONTEXT} - Bulk inserted {counter} picks into {league_id}{year}")
+        return 201, {"inserted": counter}
+
+    except Exception as e:
+        logger.exception(f"{LOGGER_CONTEXT} - Exception")
         return 500, {"error": "Server Error"}
