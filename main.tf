@@ -68,9 +68,14 @@ import {
   id = "vsnandy_bets"
 }
 
-import { 
+import {
   to = aws_dynamodb_table.wapit_db
   id = "wapit_draft"
+}
+
+import {
+  to = aws_dynamodb_table.wapit_meta
+  id = "wapit_meta"
 }
 
 /*
@@ -206,7 +211,7 @@ data "aws_iam_policy_document" "lambda_logging_policy_document" {
   statement {
     sid = "DynamoDB"
     effect = "Allow"
-    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_db.arn, aws_dynamodb_table.pick_poolr.arn]
+    resources = [aws_dynamodb_table.vsnandy_db.arn, aws_dynamodb_table.wapit_db.arn, aws_dynamodb_table.wapit_meta.arn, aws_dynamodb_table.pick_poolr.arn]
     actions = [
       "dynamodb:BatchGetItem",
       "dynamodb:GetItem",
@@ -367,6 +372,24 @@ resource "aws_dynamodb_table" "wapit_db" {
 
   tags = {
     Name        = "wapit_draft"
+    Environment = "prod"
+  }
+}
+
+resource "aws_dynamodb_table" "wapit_meta" {
+  name           = "wapit_meta"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "LeagueID"
+
+  attribute {
+    name = "LeagueID"
+    type = "S"
+  }
+
+  tags = {
+    Name        = "wapit_meta"
     Environment = "prod"
   }
 }
