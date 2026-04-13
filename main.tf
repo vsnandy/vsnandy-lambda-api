@@ -629,6 +629,47 @@ resource "aws_apigatewayv2_route" "post_league" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+# Authenticated routes — JWT authorizer required
+resource "aws_apigatewayv2_route" "post_create_league" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "POST /ncaa/wapit/league"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.api_gw_auth.id
+}
+
+resource "aws_apigatewayv2_route" "patch_league" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "PATCH /ncaa/wapit/league/{league_id}/year/{year}"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.api_gw_auth.id
+}
+
+resource "aws_apigatewayv2_route" "delete_pick" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "DELETE /ncaa/wapit/league/{league_id}/year/{year}/pick"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.api_gw_auth.id
+}
+
+resource "aws_apigatewayv2_route" "delete_team" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "DELETE /ncaa/wapit/league/{league_id}/year/{year}/team"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.api_gw_auth.id
+}
+
+resource "aws_apigatewayv2_route" "post_draft_bulk" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "POST /ncaa/wapit/league/{league_id}/year/{year}/draft/bulk"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.api_gw_auth.id
+}
+
 # API GW Authorizer 
 resource "aws_apigatewayv2_authorizer" "api_gw_auth" {
   name = "vsnandy_api_gw_cognito_authorizer"
